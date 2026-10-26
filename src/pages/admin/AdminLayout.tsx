@@ -1,5 +1,5 @@
 import clsx from 'clsx'
-import { ArrowLeft, BarChart3, Bell, CalendarCheck, CalendarDays, Contact, DollarSign, Image, LayoutDashboard, ListChecks, MessageSquareText, Newspaper, QrCode, Receipt, Settings, ShieldCheck, Trophy, Users, UtensilsCrossed, Wallet } from 'lucide-react'
+import { ArrowLeft, BarChart3, LogOut, Smartphone, Bell, CalendarCheck, CalendarDays, Contact, DollarSign, Image, LayoutDashboard, ListChecks, MessageSquareText, Newspaper, QrCode, Receipt, Settings, ShieldCheck, Trophy, Users, UtensilsCrossed, Wallet } from 'lucide-react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '@/auth/AuthContext'
 import type { Rol } from '@/lib/types'
@@ -33,6 +33,8 @@ export function useSecciones() {
 
 export default function AdminLayout() {
   const secciones = useSecciones()
+  const { socio, salir } = useAuth()
+  const soloSeguridad = socio?.rol === 'seguridad'
   const { pathname } = useLocation()
   const actual = secciones.find((s) => s.a === pathname)
   const grupos = [...new Set(secciones.map((s) => s.grupo))]
@@ -56,16 +58,27 @@ export default function AdminLayout() {
                 ))}
               </div>
             ))}
-            <Link to="/" className="mt-2 flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-slate-600 hover:bg-slate-50"><ArrowLeft className="h-4 w-4" />Volver al app</Link>
+            {!soloSeguridad && <Link to="/" className="mt-2 flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-slate-600 hover:bg-slate-50"><Smartphone className="h-4 w-4" />Ver app de socio</Link>}
+            <button onClick={salir} className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-red-600 hover:bg-red-50"><LogOut className="h-4 w-4" />Cerrar sesión</button>
           </nav>
         </div>
       </aside>
       <div className="mx-auto w-full max-w-4xl flex-1">
         <header className="sticky top-0 z-20 flex min-h-[52px] items-center gap-2 border-b border-slate-200 bg-white/95 px-2 pt-[env(safe-area-inset-top)] backdrop-blur">
-          <Link to={pathname === '/admin' ? '/mas' : '/admin'} aria-label="Volver" className="grid h-10 w-10 place-items-center rounded-full text-azul active:bg-azul-50 lg:hidden">
-            <ArrowLeft className="h-5 w-5" />
-          </Link>
+          {pathname !== '/admin' && (
+            <Link to="/admin" aria-label="Volver" className="grid h-10 w-10 place-items-center rounded-full text-azul active:bg-azul-50 lg:hidden">
+              <ArrowLeft className="h-5 w-5" />
+            </Link>
+          )}
           <h1 className="flex-1 truncate px-2 font-display text-lg font-extrabold text-tinta">{actual?.texto ?? 'Administración'}</h1>
+          {!soloSeguridad && (
+            <Link to="/" className="flex items-center gap-1.5 rounded-full bg-azul-50 px-3 py-2 text-sm font-semibold text-azul lg:hidden">
+              <Smartphone className="h-4 w-4" /> App socio
+            </Link>
+          )}
+          <button onClick={salir} aria-label="Cerrar sesión" className="grid h-10 w-10 place-items-center rounded-full text-red-600 active:bg-red-50 lg:hidden">
+            <LogOut className="h-5 w-5" />
+          </button>
         </header>
         <main className="px-4 py-4 pb-[calc(2rem+env(safe-area-inset-bottom))]">
           <Outlet />

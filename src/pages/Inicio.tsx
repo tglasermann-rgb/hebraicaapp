@@ -1,4 +1,4 @@
-import { ArrowUpRight, Bell, CalendarCheck, Flame, MessageSquareText, Moon, Ticket, Trophy, UserPlus, Users, UtensilsCrossed } from 'lucide-react'
+import { ArrowUpRight, Bell, ShieldCheck, CalendarCheck, Flame, MessageSquareText, Moon, Ticket, Trophy, UserPlus, Users, UtensilsCrossed } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '@/auth/AuthContext'
 import { Avatar, Portada, Seccion, Tarjeta } from '@/components/ui'
@@ -22,7 +22,7 @@ const ACCESOS = [
 ]
 
 export default function Inicio() {
-  const { socio } = useAuth()
+  const { socio, esStaff } = useAuth()
   const noLeidas = useNoLeidas(socio)
   const shabat = proximoShabat()
   const cuenta = useDatos(() => (socio?.accion ? estadoCuenta(socio.accion) : Promise.resolve(null)), [socio?.accion])
@@ -36,7 +36,7 @@ export default function Inicio() {
   return (
     <div>
       {/* Encabezado con malla de marca */}
-      <div className="malla ruido relative overflow-hidden rounded-b-[36px] px-5 pb-6 pt-[calc(env(safe-area-inset-top)+14px)] text-white">
+      <div className="malla relative overflow-hidden rounded-b-[36px] px-5 pb-6 pt-[calc(env(safe-area-inset-top)+14px)] text-white">
         <img src="./brand/isotipo-white.png" alt="" className="pointer-events-none absolute -right-10 top-6 h-64 rotate-[-10deg] opacity-[.07]" />
         <div className="relative flex items-center justify-between">
           <img src="./brand/wordmark-white.png" alt="Hebraica" className="h-[22px]" />
@@ -73,7 +73,7 @@ export default function Inicio() {
           </div>
           {c && c.saldo > 0 && (
             <div className="mt-4 flex gap-2">
-              <span className="flex-1 rounded-full bg-gradient-to-b from-[#FF6A3D] to-llama py-2.5 text-center text-sm font-semibold">Pagar ahora</span>
+              <span className="flex-1 rounded-full bg-llama py-2.5 text-center text-sm font-semibold">Pagar ahora</span>
               <span className="flex-1 rounded-full bg-white/15 py-2.5 text-center text-sm font-semibold">Ver detalle</span>
             </div>
           )}
@@ -82,6 +82,16 @@ export default function Inicio() {
       </div>
 
       <div className="animar-entrada px-4">
+        {esStaff && (
+          <Link to="/admin" className="mt-5 flex items-center gap-3 rounded-3xl bg-tinta p-4 text-white">
+            <span className="grid h-11 w-11 place-items-center rounded-2xl bg-white/10"><ShieldCheck className="h-5 w-5" /></span>
+            <span className="flex-1">
+              <span className="block font-semibold">Panel de administración</span>
+              <span className="block text-[13px] text-white/60">Estás viendo el app como socio</span>
+            </span>
+            <ArrowUpRight className="h-5 w-5 text-white/50" />
+          </Link>
+        )}
         {/* Accesos rápidos */}
         <div className="mt-5 grid grid-cols-4 gap-2.5">
           {ACCESOS.map(({ a, icono: I, texto, color }) => (
@@ -95,8 +105,7 @@ export default function Inicio() {
         </div>
 
         {/* Shabat */}
-        <Link to="/agenda?vista=judio" className="relative mt-4 flex items-center gap-4 overflow-hidden rounded-3xl bg-gradient-to-br from-[#141C45] to-[#2A2370] p-4 text-white shadow-card">
-          <div className="pointer-events-none absolute -right-8 -top-10 h-32 w-32 rounded-full bg-amber-300/25 blur-2xl" />
+        <Link to="/agenda?vista=judio" className="relative mt-4 flex items-center gap-4 overflow-hidden rounded-3xl bg-marino p-4 text-white shadow-card">
           <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-white/10"><Moon className="h-6 w-6 text-amber-200" /></span>
           <div className="relative min-w-0 flex-1">
             <p className="text-[11px] font-semibold uppercase tracking-[.12em] text-white/50">Shabat Shalom{shabat.parasha && ` · ${shabat.parasha.replace('Parashá ', '')}`}</p>
@@ -121,7 +130,7 @@ export default function Inicio() {
                     </span>
                     {e.venta_entradas && <span className="vidrio rounded-full px-3 py-1.5 text-[11px] font-semibold">🎟️ Entradas</span>}
                   </div>
-                  <div className="relative -mx-4 -mb-4 bg-gradient-to-t from-black/60 via-black/25 to-transparent px-4 pb-4 pt-12">
+                  <div className="relative -mx-4 -mb-4 bg-tinta/75 px-4 pb-4 pt-3">
                     <p className="text-[11px] font-semibold uppercase tracking-wider text-white/75">{depto(e.departamento).nombre}</p>
                     <p className="font-display text-[20px] font-bold leading-tight">{e.titulo}</p>
                     <p className="mt-1 text-[13px] text-white/80">{fDiaHora(e.fecha_inicio)}</p>

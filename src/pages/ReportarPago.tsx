@@ -1,12 +1,13 @@
 import { Check, Copy, Upload } from 'lucide-react'
-import { useState, type FormEvent } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useState, type FormEvent } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@/auth/AuthContext'
 import { Boton, Campo, MensajeError, Pagina, Selector, Tarjeta, useAviso } from '@/components/ui'
 import { api } from '@/lib/api'
 import { estadoCuenta } from '@/lib/cuenta'
 import { fBs, fUSD, hoyISO } from '@/lib/formato'
 import { useDatos } from '@/lib/useDatos'
+import { Casilla } from './Cuenta'
 import { NOMBRE_METODO, type DatosBancarios, type MetodoPago } from '@/lib/types'
 
 const EN_BS: MetodoPago[] = ['pago_movil', 'transferencia_bs']
@@ -37,6 +38,8 @@ export default function ReportarPago() {
   const aviso = useAviso()
   const cuenta = useDatos(() => estadoCuenta(socio!.accion!), [socio?.accion])
   const bancos = useDatos(() => api.obtener('configuracion', 'datos_bancarios'))
+  const [params] = useSearchParams()
+  const [sel, setSel] = useState<Set<string>>(new Set((params.get('cargos') ?? '').split(',').filter(Boolean)))
   const [metodo, setMetodo] = useState<MetodoPago>('pago_movil')
   const [monto, setMonto] = useState('')
   const [referencia, setReferencia] = useState('')
@@ -49,12 +52,25 @@ export default function ReportarPago() {
   const tasa = cuenta.datos?.tasa?.bs_por_usd ?? null
   const montoNum = Number(monto.replace(',', '.')) || 0
   const montoUSD = enBs ? (tasa ? montoNum / tasa : 0) : montoNum
-  const saldo = cuenta.datos?.saldo ?? 0
+  const pendientes = cuenta.datos?.pendientes ?? []
+  const elegidos = pendientes.filter((x) => sel.has(x.id))
+  const totalUSD = Math.round(elegidos.reduce((t, x) => t + Number(x.monto_usd), 0) * 100) / 100
+  const alternar = (id: string) => setSel((v) => {
+    const n = new Set(v)
+    if (n.has(id)) n.delete(id)
+    else n.add(id)
+    return n
+  })
+  // El monto a pagar se calcula a partir de lo que el socio eligió
+  useEffect(() => {
+    setMonto(totalUSD > 0 ? (enBs && tasa ? (totalUSD * tasa).toFixed(2) : totalUSD.toFixed(2)) : '')
+  }, [totalUSD, enBs, tasa])
   const db = bancos.datos?.valor as DatosBancarios | undefined
 
   async function enviar(e: FormEvent) {
     e.preventDefault()
     setError('')
+    if (elegidos.length === 0) return setError('Elige al menos un concepto a pagar')
     if (montoNum <= 0) return setError('Indica el monto pagado')
     if (enBs && !tasa) return setError('No hay tasa BCV registrada. Intenta más tarde.')
     setEnviando(true)
@@ -71,6 +87,7 @@ export default function ReportarPago() {
         referencia: referencia.trim(),
         fecha_pago: fecha,
         comprobante_url,
+        cargo_ids: elegidos.map((x) => x.id),
         estado: 'pendiente',
         nota_admin: null,
       })
@@ -86,6 +103,30 @@ export default function ReportarPago() {
   return (
     <Pagina titulo="Reportar pago" atras>
       <form onSubmit={enviar} className="space-y-4">
+        <div>
+          <p className="mb-2 px-1 text-[13px] font-semibold text-slate-600">¿Qué estás pagando?</p>
+          {pendientes.length === 0 ? (
+            <p className="rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">No tienes conceptos pendientes por pagar.</p>
+          ) : (
+            <Tarjeta className="divide-y divide-slate-100 overflow-hidden">
+              {pendientes.map((x) => (
+                <button key={x.id} type="button" onClick={() => alternar(x.id)} className="flex w-full items-center gap-3 px-4 py-3 text-left active:bg-slate-50">
+                  <Casilla marcada={sel.has(x.id)} />
+                  <span className="min-w-0 flex-1 truncate font-medium text-tinta">{x.concepto}</span>
+                  <span className="font-semibold tabular-nums">{fUSD(Number(x.monto_usd))}</span>
+                </button>
+              ))}
+              <div className="flex items-center justify-between bg-slate-50 px-4 py-3">
+                <span className="text-sm font-semibold text-slate-600">Total a pagar</span>
+                <span className="text-right">
+                  <span className="block font-display text-lg font-extrabold text-tinta">{fUSD(totalUSD)}</span>
+                  {tasa && <span className="block text-xs text-slate-500">{fBs(totalUSD * tasa)} · BCV {tasa}</span>}
+                </span>
+              </div>
+            </Tarjeta>
+          )}
+        </div>
+
         <Selector etiqueta="Método de pago" value={metodo} onChange={(e) => setMetodo(e.target.value as MetodoPago)}>
           {Object.entries(NOMBRE_METODO).map(([k, v]) => (
             <option key={k} value={k}>{v}</option>
@@ -102,13 +143,6 @@ export default function ReportarPago() {
             {(metodo === 'tarjeta' || metodo === 'efectivo') && <p className="py-2 text-sm text-slate-600">Paga en la caja del club y reporta aquí el número del recibo.</p>}
             {db.nota && <p className="border-t border-slate-100 py-2 text-xs text-slate-500">{db.nota}</p>}
           </Tarjeta>
-        )}
-
-        {saldo > 0 && (
-          <button type="button" onClick={() => setMonto(enBs && tasa ? (saldo * tasa).toFixed(2) : saldo.toFixed(2))} className="w-full rounded-2xl bg-azul-50 px-4 py-3 text-left text-sm text-azul">
-            Saldo pendiente: <b>{fUSD(saldo)}</b>
-            {tasa && ` (${fBs(saldo * tasa)})`} · <u>usar este monto</u>
-          </button>
         )}
 
         <Campo etiqueta={`Monto pagado en ${enBs ? 'bolívares' : 'dólares'}`} inputMode="decimal" required value={monto} onChange={(e) => setMonto(e.target.value)} placeholder="0,00"

@@ -6,7 +6,7 @@ import { CLUB } from '@/lib/brand'
 
 export function MarcoAcceso({ children }: { children: React.ReactNode }) {
   return (
-    <div className="malla ruido relative mx-auto flex min-h-[100dvh] max-w-lg flex-col overflow-hidden">
+    <div className="malla relative mx-auto flex min-h-[100dvh] max-w-lg flex-col overflow-hidden">
       <img src="./brand/isotipo-white.png" alt="" className="pointer-events-none absolute -left-16 top-24 h-80 rotate-[12deg] opacity-[.05]" />
       <div className="relative flex flex-col items-center px-6 pb-9 pt-[calc(env(safe-area-inset-top)+3.5rem)]">
         <img src="./brand/logo-white.png" alt="Hebraica" className="h-32 drop-shadow-[0_10px_30px_rgba(0,0,0,.25)]" />

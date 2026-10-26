@@ -62,6 +62,8 @@ function Protegida() {
   const loc = useLocation()
   if (cargando) return <Pantalla><img src="./brand/logo-white.png" alt="Hebraica" className="mx-auto h-32 animate-pulse" /></Pantalla>
   if (!sesion) return <Navigate to="/entrar" replace state={{ desde: loc.pathname }} />
+  // Seguridad solo usa el escáner: no ve la parte de socios
+  if (socio?.rol === 'seguridad' && !loc.pathname.startsWith('/admin')) return <Navigate to="/admin/escaner" replace />
   if (!socio)
     return (
       <MarcoAcceso>
@@ -87,10 +89,13 @@ function SoloStaff({ roles = [] }: { roles?: Rol[] }) {
   )
 }
 
+/** Pantalla de entrada: tras iniciar sesión, cada rol va a su sección. */
 function Publica({ children }: { children: ReactNode }) {
-  const { sesion, cargando } = useAuth()
+  const { sesion, socio, cargando, esStaff } = useAuth()
   if (cargando) return null
-  return sesion ? <Navigate to="/" replace /> : <>{children}</>
+  if (!sesion) return <>{children}</>
+  if (socio?.rol === 'seguridad') return <Navigate to="/admin/escaner" replace />
+  return <Navigate to={esStaff ? '/admin' : '/'} replace />
 }
 
 export default function App() {

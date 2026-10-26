@@ -40,6 +40,7 @@ export interface Cargo {
   fecha: string
   vence: string | null
   tipo: 'cuota' | 'actividad' | 'evento' | 'otro'
+  estado: 'pendiente' | 'pagado'
   created_at: string
 }
 
@@ -66,6 +67,8 @@ export interface Pago {
   referencia: string
   fecha_pago: string
   comprobante_url: string | null
+  /** Cargos que cubre este pago */
+  cargo_ids: string[]
   estado: 'pendiente' | 'aprobado' | 'rechazado'
   nota_admin: string | null
   created_at: string

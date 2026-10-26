@@ -29,7 +29,7 @@ export default function AppLayout() {
             <NavLink key={a} to={a} end={a === '/'} className="flex flex-col items-center justify-center">
               {({ isActive }) =>
                 central ? (
-                  <span className={clsx('grid h-[52px] w-[52px] place-items-center rounded-[18px] text-white shadow-brillo transition', isActive ? 'bg-gradient-to-br from-[#FF6A3D] to-llama' : 'bg-gradient-to-br from-[#3450C4] to-marino')}>
+                  <span className={clsx('grid h-[52px] w-[52px] place-items-center rounded-[18px] text-white transition', isActive ? 'bg-llama' : 'bg-azul')}>
                     <Icono className="h-6 w-6" strokeWidth={2.2} />
                   </span>
                 ) : (

@@ -54,7 +54,7 @@ export function Macabilandia() {
   const { datos, cargando } = useDatos(() => api.listar('actividades', { eq: { programa: 'macabilandia' }, orden: { campo: 'nombre' } }))
   return (
     <Pagina titulo="Macabilandia" atras sinPadding>
-      <div className="relative overflow-hidden bg-gradient-to-br from-[#F39019] to-llama px-5 pb-8 pt-6 text-white">
+      <div className="relative overflow-hidden bg-[#F39019] px-5 pb-8 pt-6 text-white">
         <img src="./brand/isotipo-white.png" alt="" className="absolute -right-6 -top-4 h-48 opacity-15" />
         <Flame className="h-10 w-10" />
         <h2 className="mt-2 font-display text-3xl font-bold">Macabilandia</h2>

@@ -12,9 +12,9 @@ import { depto } from '@/lib/brand'
 type Variante = 'primario' | 'secundario' | 'acento' | 'peligro' | 'fantasma'
 
 const VARIANTES: Record<Variante, string> = {
-  primario: 'bg-gradient-to-b from-[#3450C4] to-azul text-white shadow-brillo active:brightness-95 disabled:opacity-50 disabled:shadow-none',
+  primario: 'bg-azul text-white active:bg-azul-700 disabled:opacity-50',
   secundario: 'bg-azul-50 text-azul active:bg-azul-100',
-  acento: 'bg-gradient-to-b from-[#FF6A3D] to-llama text-white shadow-[0_10px_30px_-10px_rgba(241,77,35,.7)] active:brightness-95 disabled:opacity-50',
+  acento: 'bg-llama text-white active:brightness-95 disabled:opacity-50',
   peligro: 'bg-red-50 text-red-600 active:bg-red-100',
   fantasma: 'text-azul active:bg-azul-50',
 }
@@ -164,7 +164,7 @@ export function Cargando({ texto = 'Cargando…' }: { texto?: string }) {
 export function Vacio({ icono, titulo, texto, children }: { icono?: ReactNode; titulo: string; texto?: string; children?: ReactNode }) {
   return (
     <div className="flex flex-col items-center px-6 py-12 text-center">
-      {icono && <div className="mb-4 grid h-16 w-16 place-items-center rounded-3xl bg-gradient-to-br from-azul-50 to-azul-100 text-azul">{icono}</div>}
+      {icono && <div className="mb-4 grid h-16 w-16 place-items-center rounded-3xl bg-azul-50 text-azul">{icono}</div>}
       <p className="font-display text-lg font-bold text-tinta">{titulo}</p>
       {texto && <p className="mt-1 text-sm text-slate-500">{texto}</p>}
       {children && <div className="mt-4">{children}</div>}
@@ -208,7 +208,7 @@ export function Avatar({ nombre, foto, tam = 40 }: { nombre: string; foto?: stri
   const ini = nombre.split(' ').filter(Boolean).slice(0, 2).map((p) => p[0]).join('').toUpperCase()
   if (foto) return <img src={foto} alt="" className="shrink-0 rounded-full object-cover" style={{ width: tam, height: tam }} />
   return (
-    <span className="grid shrink-0 place-items-center rounded-full bg-gradient-to-br from-[#4B67E0] to-marino font-display font-bold text-white" style={{ width: tam, height: tam, fontSize: tam * 0.36 }}>
+    <span className="grid shrink-0 place-items-center rounded-full bg-azul font-display font-bold text-white" style={{ width: tam, height: tam, fontSize: tam * 0.36 }}>
       {ini}
     </span>
   )
@@ -220,7 +220,7 @@ export function Portada({ imagen, departamento, className, children }: { imagen?
   return (
     <div
       className={clsx('relative overflow-hidden', className)}
-      style={{ backgroundColor: d.color, backgroundImage: `radial-gradient(120% 90% at 100% 0%, rgba(255,255,255,.35) 0%, transparent 55%), radial-gradient(90% 90% at 0% 100%, rgba(14,20,48,.35) 0%, transparent 60%)` }}
+      style={{ backgroundColor: d.color }}
     >
       {imagen ? (
         <img src={imagen} alt="" className="absolute inset-0 h-full w-full object-cover" />

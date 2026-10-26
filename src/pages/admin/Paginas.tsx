@@ -140,6 +140,10 @@ export function AdminPagos() {
   const aviso = useAviso()
   const [estado, setEstado] = useState<'pendiente' | 'aprobado' | 'rechazado'>('pendiente')
   const { datos, recargar } = useDatos(() => api.listar('pagos', { eq: { estado }, orden: { campo: 'created_at', asc: false }, limite: 200 }), [estado])
+  const cargos = useDatos(async () => {
+    const ids = [...new Set((datos ?? []).flatMap((p) => p.cargo_ids ?? []))]
+    return ids.length ? api.listar('cargos', { in: { id: ids } }) : []
+  }, [datos])
   const [nota, setNota] = useState<Record<string, string>>({})
   const [procesando, setProcesando] = useState<string | null>(null)
 
@@ -183,6 +187,14 @@ export function AdminPagos() {
               </div>
             </div>
             {p.comprobante_url && <button onClick={() => verComprobante(p.comprobante_url!)} className="mt-2 text-sm font-medium text-azul">Ver comprobante</button>}
+            {(p.cargo_ids?.length ?? 0) > 0 && (
+              <div className="mt-2 rounded-2xl bg-slate-50 px-3 py-2 text-sm text-slate-600">
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Conceptos que paga</p>
+                {(cargos.datos ?? []).filter((c) => p.cargo_ids.includes(c.id)).map((c) => (
+                  <p key={c.id} className="flex justify-between"><span>{c.concepto}</span><span className="tabular-nums">{fUSD(Number(c.monto_usd))}</span></p>
+                ))}
+              </div>
+            )}
             {p.nota_admin && <p className="mt-2 text-sm text-slate-600">Nota: {p.nota_admin}</p>}
             {p.estado === 'pendiente' && (
               <div className="mt-3 space-y-2">
@@ -219,7 +231,7 @@ function CuotaMasiva({ alTerminar }: { alTerminar: () => void }) {
       const socios = await api.listar('socios', { eq: { parentesco: 'titular', rol: 'socio' } })
       const acciones = [...new Set(socios.map((s) => s.accion).filter(Boolean))] as string[]
       if (!confirm(`Se creará un cargo de ${fUSD(Number(monto))} a ${acciones.length} acciones. ¿Continuar?`)) return
-      await api.crearVarios('cargos', acciones.map((accion) => ({ accion, concepto, monto_usd: Number(monto), fecha: hoyISO(), vence: vence || null, tipo: 'cuota' as const })))
+      await api.crearVarios('cargos', acciones.map((accion) => ({ accion, concepto, monto_usd: Number(monto), fecha: hoyISO(), vence: vence || null, tipo: 'cuota' as const, estado: 'pendiente' as const })))
       await api.crear('notificaciones', { titulo: 'Nueva cuota disponible', cuerpo: `${concepto}: ${fUSD(Number(monto))}. Puedes pagarla desde el app.`, destino: 'todos', enlace: '/cuenta' })
       aviso(`Cuota cargada a ${acciones.length} acciones`)
       setAbierto(false)
@@ -252,17 +264,27 @@ export function AdminCargos() {
       tabla="cargos"
       nombre="cargo"
       filtro={{ orden: { campo: 'fecha', asc: false }, limite: 500 }}
-      inicial={{ tipo: 'otro', fecha: hoyISO() }}
+      inicial={{ tipo: 'otro', estado: 'pendiente', fecha: hoyISO() }}
       buscar={(c, q) => `${c.accion} ${c.concepto}`.toLowerCase().includes(q)}
       cabecera={(r) => <CuotaMasiva alTerminar={r} />}
-      vista={(c) => ({ titulo: c.concepto, sub: `Acción ${c.accion} · ${fFechaCorta(c.fecha)}`, extra: <span className="font-medium">{fUSD(Number(c.monto_usd))}</span> })}
+      vista={(c) => ({
+        titulo: c.concepto,
+        sub: `Acción ${c.accion} · ${fFechaCorta(c.fecha)}`,
+        extra: (
+          <div className="flex flex-col items-end gap-1">
+            <span className="font-medium tabular-nums">{fUSD(Number(c.monto_usd))}</span>
+            <Insignia color={c.estado === 'pagado' ? 'verde' : 'ambar'}>{c.estado === 'pagado' ? 'Pagado' : 'Pendiente'}</Insignia>
+          </div>
+        ),
+      })}
       campos={[
         { k: 'accion', etiqueta: 'Acción', req: true },
         { k: 'concepto', etiqueta: 'Concepto', req: true },
-        { k: 'monto_usd', etiqueta: 'Monto (USD)', tipo: 'numero', req: true, ayuda: 'Usa un monto negativo para notas de crédito' },
+        { k: 'monto_usd', etiqueta: 'Monto (USD)', tipo: 'numero', req: true, ayuda: 'Para anular un cargo márcalo como Pagado o elimínalo' },
         { k: 'fecha', etiqueta: 'Fecha', tipo: 'fecha', req: true },
         { k: 'vence', etiqueta: 'Vence', tipo: 'fecha' },
         { k: 'tipo', etiqueta: 'Tipo', tipo: 'select', req: true, opciones: [{ v: 'cuota', t: 'Cuota' }, { v: 'actividad', t: 'Actividad' }, { v: 'evento', t: 'Evento' }, { v: 'otro', t: 'Otro' }] },
+        { k: 'estado', etiqueta: 'Estado', tipo: 'select', req: true, opciones: [{ v: 'pendiente', t: 'Pendiente' }, { v: 'pagado', t: 'Pagado' }] },
       ]}
     />
   )

@@ -96,7 +96,7 @@ function CalendarioJudio() {
   const dias = useMemo(() => festividades(new Date(), addMonths(new Date(), 12)), [])
   return (
     <>
-      <Tarjeta className="bg-gradient-to-br from-[#141C45] to-[#2A2370] p-5 text-white">
+      <Tarjeta className="bg-marino p-5 text-white">
         <p className="text-xs uppercase tracking-wide text-white/60">{fechaHebrea()} · Caracas</p>
         <p className="mt-1 font-display text-xl font-extrabold">{shabat.parasha ?? 'Shabat'}</p>
         <div className="mt-3 grid grid-cols-2 gap-3">

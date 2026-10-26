@@ -35,6 +35,7 @@ create table public.cargos (
   fecha date not null default current_date,
   vence date,
   tipo text not null default 'cuota' check (tipo in ('cuota','actividad','evento','otro')),
+  estado text not null default 'pendiente' check (estado in ('pendiente','pagado')),
   created_at timestamptz not null default now()
 );
 create index on public.cargos (accion);
@@ -51,6 +52,7 @@ create table public.pagos (
   referencia text not null,
   fecha_pago date not null,
   comprobante_url text,
+  cargo_ids uuid[] not null default '{}',
   estado text not null default 'pendiente' check (estado in ('pendiente','aprobado','rechazado')),
   nota_admin text,
   created_at timestamptz not null default now()
@@ -420,20 +422,18 @@ begin
   where lower(email) = lower(auth.jwt() ->> 'email') and (user_id is null or user_id = auth.uid());
 end $$;
 
--- Carnet digital: token de un solo uso con vigencia de 60 segundos (evita capturas de pantalla).
+-- Carnet digital: token de un solo uso con vigencia de 30 segundos (evita capturas de pantalla).
+-- Cada socio solo puede generar el código de su propio carnet.
 create or replace function public.emitir_token_carnet(p_socio uuid) returns json
 language plpgsql security definer set search_path = public as $$
 declare v_token text; v_exp timestamptz; v_yo public.socios;
 begin
   v_yo := public.mi_socio();
   if v_yo.id is null then raise exception 'No autenticado'; end if;
-  -- El titular puede mostrar el carnet de su grupo familiar (p. ej. hijos sin teléfono)
-  if not exists (select 1 from public.socios s where s.id = p_socio and (s.id = v_yo.id or s.accion = v_yo.accion)) then
-    raise exception 'No autorizado';
-  end if;
+  if p_socio <> v_yo.id then raise exception 'Solo puedes ver tu propio carnet'; end if;
   delete from public.tokens_carnet where expira < now() - interval '5 minutes';
   v_token := encode(gen_random_bytes(16), 'hex');
-  v_exp := now() + interval '60 seconds';
+  v_exp := now() + interval '30 seconds';
   insert into public.tokens_carnet(token, socio_id, expira) values (v_token, p_socio, v_exp);
   return json_build_object('token', v_token, 'expira', v_exp);
 end $$;
@@ -603,6 +603,10 @@ begin
   update public.pagos set estado = case when p_aprobado then 'aprobado' else 'rechazado' end, nota_admin = nullif(p_nota, '')
     where id = p_pago and estado = 'pendiente' returning * into v_p;
   if v_p.id is null then raise exception 'El pago ya fue procesado'; end if;
+  -- Al aprobar, los conceptos que el socio eligió pagar quedan saldados
+  if p_aprobado then
+    update public.cargos set estado = 'pagado' where id = any(v_p.cargo_ids) and accion = v_p.accion;
+  end if;
   insert into public.notificaciones(titulo, cuerpo, destino, accion, enlace) values (
     case when p_aprobado then 'Pago aprobado' else 'Pago rechazado' end,
     'Su pago con referencia ' || v_p.referencia || case when p_aprobado then ' fue aprobado.' else ' fue rechazado. ' || coalesce(p_nota, '') end,

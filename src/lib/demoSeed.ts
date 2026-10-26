@@ -22,17 +22,17 @@ export function semilla(): DB {
 
   const mes = (n: number) => format(subDays(new Date(), 30 * n), 'yyyy-MM-01')
   const cargos: Tablas['cargos'][] = [
-    { ...base, id: 'c1', accion: '1234', concepto: 'Cuota de mantenimiento', monto_usd: 120, fecha: mes(2), vence: mes(2), tipo: 'cuota' },
-    { ...base, id: 'c2', accion: '1234', concepto: 'Cuota de mantenimiento', monto_usd: 120, fecha: mes(1), vence: mes(1), tipo: 'cuota' },
-    { ...base, id: 'c3', accion: '1234', concepto: 'Cuota de mantenimiento', monto_usd: 120, fecha: mes(0), vence: d(10), tipo: 'cuota' },
-    { ...base, id: 'c4', accion: '1234', concepto: 'Academia de Tenis (Daniel)', monto_usd: 45, fecha: mes(0), vence: d(10), tipo: 'actividad' },
-    { ...base, id: 'c5', accion: '5678', concepto: 'Cuota de mantenimiento', monto_usd: 120, fecha: mes(0), vence: d(10), tipo: 'cuota' },
+    { ...base, id: 'c1', accion: '1234', concepto: 'Cuota de mantenimiento', monto_usd: 120, fecha: mes(2), vence: mes(2), tipo: 'cuota', estado: 'pagado' },
+    { ...base, id: 'c2', accion: '1234', concepto: 'Cuota de mantenimiento', monto_usd: 120, fecha: mes(1), vence: mes(1), tipo: 'cuota', estado: 'pagado' },
+    { ...base, id: 'c3', accion: '1234', concepto: 'Cuota de mantenimiento', monto_usd: 120, fecha: mes(0), vence: d(10), tipo: 'cuota', estado: 'pendiente' },
+    { ...base, id: 'c4', accion: '1234', concepto: 'Academia de Tenis (Daniel)', monto_usd: 45, fecha: mes(0), vence: d(10), tipo: 'actividad', estado: 'pendiente' },
+    { ...base, id: 'c5', accion: '5678', concepto: 'Cuota de mantenimiento', monto_usd: 120, fecha: mes(0), vence: d(10), tipo: 'cuota', estado: 'pendiente' },
   ]
 
   const pagos: Tablas['pagos'][] = [
-    { ...base, id: 'p1', accion: '1234', socio_id: 's1', metodo: 'zelle', moneda: 'USD', monto: 120, tasa: null, monto_usd: 120, referencia: 'ZL-88213', fecha_pago: format(subDays(new Date(), 50), 'yyyy-MM-dd'), comprobante_url: null, estado: 'aprobado', nota_admin: null },
-    { ...base, id: 'p2', accion: '1234', socio_id: 's1', metodo: 'pago_movil', moneda: 'VES', monto: 4380, tasa: 36.5, monto_usd: 120, referencia: '004512', fecha_pago: format(subDays(new Date(), 20), 'yyyy-MM-dd'), comprobante_url: null, estado: 'aprobado', nota_admin: null },
-    { ...base, id: 'p3', accion: '5678', socio_id: 's7', metodo: 'transferencia_bs', moneda: 'VES', monto: 4400, tasa: 36.6, monto_usd: 120.22, referencia: '7781234', fecha_pago: d(-1), comprobante_url: null, estado: 'pendiente', nota_admin: null },
+    { ...base, id: 'p1', accion: '1234', socio_id: 's1', metodo: 'zelle', moneda: 'USD', monto: 120, tasa: null, monto_usd: 120, referencia: 'ZL-88213', fecha_pago: format(subDays(new Date(), 50), 'yyyy-MM-dd'), comprobante_url: null, cargo_ids: ['c1'], estado: 'aprobado', nota_admin: null },
+    { ...base, id: 'p2', accion: '1234', socio_id: 's1', metodo: 'pago_movil', moneda: 'VES', monto: 4380, tasa: 36.5, monto_usd: 120, referencia: '004512', fecha_pago: format(subDays(new Date(), 20), 'yyyy-MM-dd'), comprobante_url: null, cargo_ids: ['c2'], estado: 'aprobado', nota_admin: null },
+    { ...base, id: 'p3', accion: '5678', socio_id: 's7', metodo: 'transferencia_bs', moneda: 'VES', monto: 4400, tasa: 36.6, monto_usd: 120.22, referencia: '7781234', fecha_pago: d(-1), comprobante_url: null, cargo_ids: ['c5'], estado: 'pendiente', nota_admin: null },
   ]
 
   const tasas: Tablas['tasas'][] = [{ ...base, id: 't1', fecha: d(0), bs_por_usd: 36.62 }]

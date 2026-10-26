@@ -30,7 +30,7 @@ export default function Familia() {
 
   return (
     <Pagina titulo="Mi grupo familiar" atras>
-      <p className="mb-4 text-sm text-slate-600">Todos los miembros de la acción {socio?.accion}. Los hijos sin teléfono pueden usar su carnet desde tu app (pantalla Carnet).</p>
+      <p className="mb-4 text-sm text-slate-600">Todos los miembros de la acción {socio?.accion}. Cada miembro tiene su propio carnet personal en su teléfono.</p>
       {cargando ? (
         <Cargando />
       ) : (

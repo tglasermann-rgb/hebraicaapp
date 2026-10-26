@@ -10,8 +10,7 @@ export default function Reportes() {
   const { datos, cargando } = useDatos(async () => {
     const [cargos, pagos] = await Promise.all([api.listar('cargos'), api.listar('pagos', { eq: { estado: 'aprobado' } })])
     const saldo = new Map<string, number>()
-    for (const c of cargos) saldo.set(c.accion, (saldo.get(c.accion) ?? 0) + Number(c.monto_usd))
-    for (const p of pagos) saldo.set(p.accion, (saldo.get(p.accion) ?? 0) - Number(p.monto_usd))
+    for (const c of cargos) if (c.estado !== 'pagado') saldo.set(c.accion, (saldo.get(c.accion) ?? 0) + Number(c.monto_usd))
     const deudores = [...saldo.entries()].filter(([, v]) => v > 0.009).sort((a, b) => b[1] - a[1])
     const porMes = new Map<string, number>()
     for (const p of pagos) {

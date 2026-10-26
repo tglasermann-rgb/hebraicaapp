@@ -5,7 +5,7 @@ import type { Tabla } from './types'
 
 // Modo demo: replica las reglas de supabase/migrations en el navegador para poder probar el app sin servidor.
 
-const CLAVE_DB = 'mi-hebraica-demo-v1'
+const CLAVE_DB = 'mi-hebraica-demo-v2'
 const CLAVE_SESION = 'mi-hebraica-demo-sesion'
 const CODIGO_DEMO = '123456'
 
@@ -61,6 +61,7 @@ export function crearDemoBackend(): Backend {
     return s
   }
   const tabla = <T extends Tabla>(t: T) => db[t] as any[]
+  const usados = new Set<string>() // tokens de carnet ya escaneados
 
   const backend: Backend = {
     modo: 'demo',
@@ -152,10 +153,10 @@ export function crearDemoBackend(): Backend {
     },
 
     async emitirTokenCarnet(socioId) {
-      const s = db.socios.find((x) => x.id === socioId)
-      const expira = new Date(Date.now() + 60_000).toISOString()
-      // En demo el token lleva el id del socio y la expiración (en producción es aleatorio y se guarda en la BD)
-      return { token: `${s?.id}.${Date.parse(expira)}`, expira }
+      if (socioId !== yo().id) throw new Error('Solo puedes ver tu propio carnet')
+      const expira = new Date(Date.now() + 30_000).toISOString()
+      // En demo el token lleva el id y la expiración (en producción es aleatorio y vive en la BD)
+      return { token: `${socioId}.${Date.parse(expira)}.${id().slice(0, 8)}`, expira }
     },
     async validarCodigo(codigo) {
       await espera()
@@ -168,6 +169,11 @@ export function crearDemoBackend(): Backend {
       if (tipo === 'S') {
         const [sid, exp] = val.split('.')
         const s = db.socios.find((x) => x.id === sid)
+        if (usados.has(val)) {
+          log('socio', s?.nombre, false, 'Código ya usado')
+          return { valido: false, tipo: 'socio', nombre: s ? `${s.nombre} ${s.apellido}` : undefined, mensaje: 'Este código ya fue usado. Posible captura de pantalla.' }
+        }
+        usados.add(val)
         if (!s || Number(exp) < Date.now()) {
           log('socio', s?.nombre, false, 'Carnet vencido')
           return { valido: false, tipo: 'socio', mensaje: 'Carnet vencido. Pida al socio abrir el carnet de nuevo.' }
@@ -227,7 +233,7 @@ export function crearDemoBackend(): Backend {
       const ahora = new Date().toISOString()
       db.inscripciones.push({ id: id(), actividad_id: actividadId, socio_id: socioId, accion: s.accion!, estado: 'activa', created_at: ahora })
       if (act.precio_usd > 0)
-        db.cargos.push({ id: id(), accion: s.accion!, concepto: `Inscripción: ${act.nombre} (${p.nombre})`, monto_usd: act.precio_usd, fecha: hoy(), vence: null, tipo: 'actividad', created_at: ahora })
+        db.cargos.push({ id: id(), accion: s.accion!, concepto: `Inscripción: ${act.nombre} (${p.nombre})`, monto_usd: act.precio_usd, fecha: hoy(), vence: null, tipo: 'actividad', estado: 'pendiente', created_at: ahora })
       guardar()
     },
     async comprarEntradas(eventoId, asistentes) {
@@ -242,7 +248,7 @@ export function crearDemoBackend(): Backend {
       for (const n of asistentes)
         db.entradas.push({ id: id(), evento_id: eventoId, socio_id: s.id, accion: s.accion!, nombre_asistente: n.trim(), codigo: id().replace(/-/g, '').slice(0, 24), estado: 'activa', created_at: ahora })
       if (ev.precio_usd > 0)
-        db.cargos.push({ id: id(), accion: s.accion!, concepto: `${asistentes.length} entrada(s): ${ev.titulo}`, monto_usd: ev.precio_usd * asistentes.length, fecha: hoy(), vence: null, tipo: 'evento', created_at: ahora })
+        db.cargos.push({ id: id(), accion: s.accion!, concepto: `${asistentes.length} entrada(s): ${ev.titulo}`, monto_usd: ev.precio_usd * asistentes.length, fecha: hoy(), vence: null, tipo: 'evento', estado: 'pendiente', created_at: ahora })
       guardar()
     },
     async revisarPago(pagoId, aprobado, nota) {
@@ -250,6 +256,7 @@ export function crearDemoBackend(): Backend {
       const p = db.pagos.find((x) => x.id === pagoId)
       if (!p || p.estado !== 'pendiente') throw new Error('El pago ya fue procesado')
       p.estado = aprobado ? 'aprobado' : 'rechazado'
+      if (aprobado) for (const c of db.cargos) if (p.cargo_ids?.includes(c.id) && c.accion === p.accion) c.estado = 'pagado'
       p.nota_admin = nota || null
       db.notificaciones.unshift({
         id: id(), titulo: aprobado ? 'Pago aprobado' : 'Pago rechazado',

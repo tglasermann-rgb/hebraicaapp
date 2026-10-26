@@ -21,7 +21,7 @@ export default function Mas() {
 
       {esStaff && (
         <Link to="/admin">
-          <Tarjeta className="mt-3 flex items-center gap-3 bg-gradient-to-br from-tinta to-marino p-4 text-white">
+          <Tarjeta className="mt-3 flex items-center gap-3 bg-marino p-4 text-white">
             <ShieldCheck className="h-6 w-6" />
             <div className="flex-1">
               <p className="font-medium">Panel de administración</p>
