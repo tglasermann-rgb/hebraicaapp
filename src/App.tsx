@@ -9,12 +9,15 @@ import type { Rol } from './lib/types'
 import Actividades, { DetalleActividad, Macabilandia } from './pages/Actividades'
 import Agenda from './pages/Agenda'
 import Carnet from './pages/Carnet'
+import Clases from './pages/Clases'
+import Encuestas from './pages/Encuestas'
 import { Album, Directorio, Galeria, Noticia, Noticias, Restaurantes } from './pages/Contenido'
 import Cuenta from './pages/Cuenta'
 import Entradas from './pages/Entradas'
 import EnRevision from './pages/EnRevision'
 import Entrar from './pages/Entrar'
 import Registro from './pages/Registro'
+import { NuevaClave, Recuperar } from './pages/Recuperar'
 import Evento from './pages/Evento'
 import Familia from './pages/Familia'
 import Inicio from './pages/Inicio'
@@ -34,6 +37,11 @@ const Escaner = lazy(() => import('./pages/admin/Escaner'))
 const Reportes = lazy(() => import('./pages/admin/Reportes'))
 const Resumen = lazy(() => import('./pages/admin/Resumen'))
 const SolicitudesAcceso = lazy(() => import('./pages/admin/Accesos'))
+const extra = (nombre: string) => lazy(() => import('./pages/admin/Extras').then((m) => ({ default: (m as any)[nombre] })))
+const AdminClases = extra('AdminClases')
+const AdminEncuestas = extra('AdminEncuestas')
+const Estadisticas = extra('Estadisticas')
+const Historial = extra('Historial')
 const pagina = (nombre: string) => lazy(() => import('./pages/admin/Paginas').then((m) => ({ default: (m as any)[nombre] })))
 const A = Object.fromEntries(
   ['AdminSocios', 'AdminPagos', 'AdminCargos', 'AdminTasas', 'AdminInstalaciones', 'AdminReservas', 'AdminActividades', 'AdminEventos', 'AdminNoticias', 'AdminGaleria', 'AdminNotificaciones', 'AdminSolicitudes', 'AdminDirectorio', 'AdminRestaurantes', 'AdminConfiguracion', 'AdminAccesos'].map((n) => [n, pagina(n)]),
@@ -104,6 +112,8 @@ export default function App() {
           <Routes>
             <Route path="/entrar" element={<Publica><Entrar /></Publica>} />
             <Route path="/registro" element={<Publica><Registro /></Publica>} />
+            <Route path="/recuperar" element={<Publica><Recuperar /></Publica>} />
+            <Route path="/nueva-clave" element={<NuevaClave />} />
             <Route path="/pase/:codigo" element={<PaseInvitado />} />
             <Route path="/privacidad" element={<div className="mx-auto max-w-lg"><Privacidad /></div>} />
             <Route path="/terminos" element={<div className="mx-auto max-w-lg"><Terminos /></div>} />
@@ -122,6 +132,8 @@ export default function App() {
                 <Route path="actividades" element={<Actividades />} />
                 <Route path="actividades/:id" element={<DetalleActividad />} />
                 <Route path="macabilandia" element={<Macabilandia />} />
+                <Route path="clases" element={<Clases />} />
+                <Route path="encuestas" element={<Encuestas />} />
                 <Route path="familia" element={<Familia />} />
                 <Route path="invitados" element={<Invitados />} />
                 <Route path="noticias" element={<Noticias />} />
@@ -153,9 +165,11 @@ export default function App() {
                     <Route path="cargos" element={<A.AdminCargos />} />
                     <Route path="tasas" element={<A.AdminTasas />} />
                     <Route path="reportes" element={<Reportes />} />
+                    <Route path="estadisticas" element={<Estadisticas />} />
                   </Route>
                   <Route element={<SoloStaff roles={['deportes']} />}>
                     <Route path="instalaciones" element={<A.AdminInstalaciones />} />
+                    <Route path="clases" element={<AdminClases />} />
                   </Route>
                   <Route element={<SoloStaff roles={['deportes', 'seguridad']} />}>
                     <Route path="reservas" element={<A.AdminReservas />} />
@@ -166,6 +180,7 @@ export default function App() {
                   <Route element={<SoloStaff roles={['eventos']} />}>
                     <Route path="eventos" element={<A.AdminEventos />} />
                     <Route path="galeria" element={<A.AdminGaleria />} />
+                    <Route path="encuestas" element={<AdminEncuestas />} />
                   </Route>
                   <Route element={<SoloStaff roles={['eventos', 'deportes', 'administracion']} />}>
                     <Route path="noticias" element={<A.AdminNoticias />} />
@@ -176,6 +191,7 @@ export default function App() {
                     <Route path="directorio" element={<A.AdminDirectorio />} />
                     <Route path="restaurantes" element={<A.AdminRestaurantes />} />
                     <Route path="configuracion" element={<A.AdminConfiguracion />} />
+                    <Route path="historial" element={<Historial />} />
                   </Route>
                 </Route>
               </Route>

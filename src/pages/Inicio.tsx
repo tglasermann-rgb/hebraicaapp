@@ -1,4 +1,4 @@
-import { ArrowUpRight, Bell, CheckCircle2, QrCode, ShieldCheck, CalendarCheck, Flame, MessageSquareText, Moon, Ticket, Trophy, UserPlus, Users, UtensilsCrossed } from 'lucide-react'
+import { ArrowUpRight, Bell, CheckCircle2, Dumbbell, Vote, QrCode, ShieldCheck, CalendarCheck, Flame, MessageSquareText, Moon, Ticket, Trophy, UserPlus, Users, UtensilsCrossed } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '@/auth/AuthContext'
 import { Avatar, Portada, Seccion, Tarjeta } from '@/components/ui'
@@ -10,15 +10,19 @@ import { capitalizar, fBs, fDiaHora, fFecha, fHace, fHora, fUSD, hoyISO } from '
 import { useNoLeidas } from '@/lib/notificaciones'
 import { useDatos } from '@/lib/useDatos'
 
+const GRANDES = ['/reservas', '/entradas']
+
 const ACCESOS = [
   { a: '/reservas', icono: CalendarCheck, texto: 'Reservar', color: '#16A394' },
   { a: '/actividades', icono: Trophy, texto: 'Actividades', color: '#2C55D8' },
+  { a: '/clases', icono: Dumbbell, texto: 'Clases', color: '#16A394' },
   { a: '/macabilandia', icono: Flame, texto: 'Macabilandia', color: '#F07D0E' },
   { a: '/entradas', icono: Ticket, texto: 'Entradas', color: '#DB1F86' },
   { a: '/invitados', icono: UserPlus, texto: 'Invitados', color: '#7B3FD1' },
   { a: '/familia', icono: Users, texto: 'Familia', color: '#293E9B' },
   { a: '/restaurantes', icono: UtensilsCrossed, texto: 'Comer', color: '#E8312F' },
   { a: '/solicitudes', icono: MessageSquareText, texto: 'Solicitudes', color: '#1E8A4C' },
+  { a: '/encuestas', icono: Vote, texto: 'Encuestas', color: '#E3198B' },
 ]
 
 export default function Inicio() {
@@ -101,18 +105,18 @@ export default function Inicio() {
             <span className="block text-[13px] text-white/70">Toca para entrar al club</span>
           </span>
         </Link>
-        {[ACCESOS[0], ACCESOS[3]].map(({ a, icono: I, texto, color }) => (
+        {ACCESOS.filter((x) => GRANDES.includes(x.a)).map(({ a, icono: I, texto, color }) => (
           <Link key={a} to={a} className="flex min-h-[88px] items-center gap-3 rounded-[24px] bg-superficie p-4 shadow-card active:scale-[.98]">
             <span className="grid h-10 w-10 place-items-center rounded-2xl" style={{ background: `${color}26`, color }}><I className="h-5 w-5" strokeWidth={2.2} /></span>
             <span className="font-semibold">{texto}</span>
           </Link>
         ))}
       </div>
-      <div className="mt-3 grid grid-cols-3 gap-3">
-        {ACCESOS.filter((_, i) => i !== 0 && i !== 3).map(({ a, icono: I, texto, color }) => (
-          <Link key={a} to={a} className="flex flex-col items-start gap-3 rounded-[24px] bg-superficie p-3.5 shadow-card active:scale-[.97]">
+      <div className="mt-3 grid grid-cols-4 gap-2.5">
+        {ACCESOS.filter((x) => !GRANDES.includes(x.a)).map(({ a, icono: I, texto, color }) => (
+          <Link key={a} to={a} className="flex flex-col items-center gap-2 rounded-[22px] bg-superficie px-1 py-3.5 shadow-card active:scale-[.97]">
             <span className="grid h-10 w-10 place-items-center rounded-2xl" style={{ background: `${color}26`, color }}><I className="h-5 w-5" strokeWidth={2.2} /></span>
-            <span className="text-[13px] font-semibold leading-tight">{texto}</span>
+            <span className="text-[11.5px] font-semibold leading-tight">{texto}</span>
           </Link>
         ))}
       </div>

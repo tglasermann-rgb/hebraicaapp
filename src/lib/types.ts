@@ -40,6 +40,7 @@ export interface Registro {
   apellido: string
   cedula: string
   usuario: string
+  email: string | null
   estado: 'pendiente' | 'aprobado' | 'rechazado'
   motivo: string | null
   socio_id: string | null
@@ -83,6 +84,8 @@ export interface Pago {
   comprobante_url: string | null
   /** Cargos que cubre este pago */
   cargo_ids: string[]
+  /** Lo que el app leyó del comprobante (referencia y monto) */
+  lectura: LecturaComprobante | null
   estado: 'pendiente' | 'aprobado' | 'rechazado'
   nota_admin: string | null
   created_at: string
@@ -269,6 +272,7 @@ export interface Notificacion {
   accion: string | null
   socio_id: string | null
   enlace: string | null
+  clave?: string | null
   created_at: string
 }
 
@@ -304,6 +308,80 @@ export interface ResultadoValidacion {
   mensaje: string
 }
 
+export interface LecturaComprobante {
+  referencia: string | null
+  monto: number | null
+  coincide: boolean
+}
+
+export interface Clase {
+  id: string
+  nombre: string
+  departamento: string
+  instructor: string | null
+  lugar: string | null
+  inicio: string
+  duracion_min: number
+  cupo: number
+  cancelada: boolean
+  created_at: string
+}
+
+export interface ReservaClase {
+  id: string
+  clase_id: string
+  socio_id: string
+  accion: string
+  estado: 'confirmada' | 'espera' | 'cancelada'
+  created_at: string
+}
+
+export interface Encuesta {
+  id: string
+  titulo: string
+  descripcion: string | null
+  tipo: 'opciones' | 'calificacion'
+  opciones: string[]
+  evento_id: string | null
+  abierta: boolean
+  cierra: string | null
+  created_at: string
+}
+
+export interface Voto {
+  id: string
+  encuesta_id: string
+  socio_id: string
+  opcion: number
+  comentario: string | null
+  created_at: string
+}
+
+export interface Auditoria {
+  id: string
+  tabla: string
+  registro_id: string | null
+  operacion: 'INSERT' | 'UPDATE' | 'DELETE'
+  antes: Record<string, unknown> | null
+  despues: Record<string, unknown> | null
+  socio_id: string | null
+  usuario: string | null
+  created_at: string
+}
+
+export interface Estadisticas {
+  socios: number
+  socios_con_app: number
+  acciones: number
+  acciones_morosas: number
+  monto_moroso: number
+  monto_pendiente: number
+  accesos_por_hora: { hora: number; total: number }[]
+  accesos_por_dia: { dia: number; total: number }[]
+  pagos_por_metodo: { metodo: MetodoPago; total: number; monto: number }[]
+  reservas_por_instalacion: { nombre: string; total: number }[]
+}
+
 export interface Tablas {
   socios: Socio
   registros: Registro
@@ -326,6 +404,11 @@ export interface Tablas {
   notificaciones: Notificacion
   accesos: Acceso
   configuracion: Configuracion
+  clases: Clase
+  reservas_clase: ReservaClase
+  encuestas: Encuesta
+  votos: Voto
+  auditoria: Auditoria
 }
 
 export type Tabla = keyof Tablas

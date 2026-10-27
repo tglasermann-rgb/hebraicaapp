@@ -7,7 +7,7 @@ import { MarcoAcceso } from './Entrar'
 
 /** Primera vez: la persona crea su usuario y envía sus datos para que Administración la apruebe. */
 export default function Registro() {
-  const [d, setD] = useState({ nombre: '', apellido: '', cedula: '', usuario: '', clave: '', clave2: '' })
+  const [d, setD] = useState({ nombre: '', apellido: '', cedula: '', email: '', usuario: '', clave: '', clave2: '' })
   const [error, setError] = useState('')
   const [cargando, setCargando] = useState(false)
   const fijar = (k: keyof typeof d) => (e: React.ChangeEvent<HTMLInputElement>) => setD({ ...d, [k]: e.target.value })
@@ -16,6 +16,7 @@ export default function Registro() {
     e.preventDefault()
     setError('')
     if (d.cedula.replace(/\D/g, '').length < 6) return setError('Revisa el número de cédula')
+    if (!/^\S+@\S+\.\S+$/.test(d.email.trim())) return setError('Revisa tu correo electrónico')
     if (!USUARIO_VALIDO.test(limpiarUsuario(d.usuario))) return setError('El usuario debe tener de 3 a 30 letras o números, sin espacios')
     if (d.clave.length < 8) return setError('La contraseña debe tener al menos 8 caracteres')
     if (d.clave !== d.clave2) return setError('Las contraseñas no coinciden')
@@ -38,6 +39,7 @@ export default function Registro() {
           <Campo etiqueta="Apellido" autoComplete="family-name" required value={d.apellido} onChange={fijar('apellido')} />
         </div>
         <Campo etiqueta="Número de cédula" inputMode="numeric" required value={d.cedula} onChange={fijar('cedula')} placeholder="Ej. 12345678" />
+        <Campo etiqueta="Correo electrónico" type="email" autoComplete="email" autoCapitalize="none" required value={d.email} onChange={fijar('email')} ayuda="Lo usaremos para recuperar tu contraseña si la olvidas." />
         <div className="border-t border-white/10 pt-4">
           <Campo etiqueta="Crea tu usuario" autoComplete="username" autoCapitalize="none" autoCorrect="off" spellCheck={false} required value={d.usuario} onChange={fijar('usuario')} placeholder="Ej. davidcohen" ayuda="Letras, números, punto o guion. Sin espacios." />
         </div>

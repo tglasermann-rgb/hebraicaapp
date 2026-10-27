@@ -1,6 +1,6 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import { limpiarUsuario, USUARIO_VALIDO, type Backend, type Filtro, type Sesion } from './backend'
-import type { Registro, ResultadoValidacion, Socio, Tabla } from './types'
+import type { Estadisticas, Registro, ResultadoValidacion, Socio, Tabla } from './types'
 
 // Supabase Auth necesita un correo: cada usuario se guarda con un correo interno derivado de su nombre
 // de usuario. Requiere desactivar "Confirm email" en Authentication → Providers → Email.
@@ -45,6 +45,7 @@ export function crearSupabaseBackend(url: string, key: string): Backend {
         apellido: d.apellido.trim(),
         cedula: d.cedula.replace(/\D/g, ''),
         usuario: limpiarUsuario(d.usuario),
+        email: d.email.trim().toLowerCase(),
       })
       if (e2) throw new Error(e2.message.includes('registro_pendiente_unico') ? 'Ya hay una solicitud en revisión con esa cédula.' : e2.message)
     },
@@ -59,9 +60,19 @@ export function crearSupabaseBackend(url: string, key: string): Backend {
       const { data: u } = await sb.auth.getUser()
       const { error } = await sb
         .from('registros')
-        .update({ nombre: d.nombre.trim(), apellido: d.apellido.trim(), cedula: d.cedula.replace(/\D/g, ''), estado: 'pendiente', motivo: null })
+        .update({ nombre: d.nombre.trim(), apellido: d.apellido.trim(), cedula: d.cedula.replace(/\D/g, ''), email: d.email.trim().toLowerCase(), estado: 'pendiente', motivo: null })
         .eq('user_id', u.user!.id)
       err(error)
+    },
+    async recuperarClave(usuario) {
+      // La función responde igual exista o no el usuario, para no revelar quién está registrado
+      const { error } = await sb.functions.invoke('restablecer-clave', { body: { usuario: limpiarUsuario(usuario) } })
+      if (error) throw new Error('No se pudo enviar el correo. Intenta más tarde o comunícate con Atención al Público.')
+      return null
+    },
+    async verificarRecuperacion(tokenHash) {
+      const { error } = await sb.auth.verifyOtp({ token_hash: tokenHash, type: 'recovery' })
+      if (error) throw new Error('El enlace venció o ya fue usado. Pide uno nuevo.')
     },
     async cambiarClave(nueva) {
       const { error } = await sb.auth.updateUser({ password: nueva })
@@ -152,6 +163,39 @@ export function crearSupabaseBackend(url: string, key: string): Backend {
     async rechazarRegistro(registroId, motivo) {
       const { error } = await sb.rpc('rechazar_registro', { p_registro: registroId, p_motivo: motivo })
       err(error)
+    },
+    async restablecerClaveAdmin(socioId) {
+      const { data, error } = await sb.functions.invoke('restablecer-clave', { body: { modo: 'admin', socio_id: socioId } })
+      if (error || !data?.clave) throw new Error(data?.error ?? 'No se pudo restablecer la contraseña')
+      return data.clave as string
+    },
+    async ocupacionClases(desde, hasta) {
+      const { data, error } = await sb.rpc('ocupacion_clases', { p_desde: desde, p_hasta: hasta })
+      err(error)
+      return (data ?? []) as any
+    },
+    async reservarClase(claseId, socioId) {
+      const { data, error } = await sb.rpc('reservar_clase', { p_clase: claseId, p_socio: socioId })
+      err(error)
+      return data as 'confirmada' | 'espera'
+    },
+    async cancelarReservaClase(reservaId) {
+      const { error } = await sb.rpc('cancelar_reserva_clase', { p_reserva: reservaId })
+      err(error)
+    },
+    async votar(encuestaId, opcion, comentario) {
+      const { error } = await sb.rpc('votar', { p_encuesta: encuestaId, p_opcion: opcion, p_comentario: comentario })
+      err(error)
+    },
+    async resultadosEncuesta(encuestaId) {
+      const { data, error } = await sb.rpc('resultados_encuesta', { p_encuesta: encuestaId })
+      err(error)
+      return (data ?? []) as any
+    },
+    async estadisticas() {
+      const { data, error } = await sb.rpc('estadisticas')
+      err(error)
+      return data as Estadisticas
     },
     async revisarPago(pagoId, aprobado, nota) {
       const { error } = await sb.rpc('revisar_pago', { p_pago: pagoId, p_aprobado: aprobado, p_nota: nota })

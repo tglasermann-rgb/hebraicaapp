@@ -1,5 +1,5 @@
 import clsx from 'clsx'
-import { ArrowLeft, BarChart3, LogOut, Smartphone, Bell, CalendarCheck, CalendarDays, Contact, DollarSign, Image, LayoutDashboard, ListChecks, MessageSquareText, Newspaper, QrCode, Receipt, Settings, ShieldCheck, Trophy, UserCheck, Users, UtensilsCrossed, Wallet } from 'lucide-react'
+import { ArrowLeft, BarChart3, Dumbbell, History, PieChart, Vote, LogOut, Smartphone, Bell, CalendarCheck, CalendarDays, Contact, DollarSign, Image, LayoutDashboard, ListChecks, MessageSquareText, Newspaper, QrCode, Receipt, Settings, ShieldCheck, Trophy, UserCheck, Users, UtensilsCrossed, Wallet } from 'lucide-react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '@/auth/AuthContext'
 import type { Rol } from '@/lib/types'
@@ -16,15 +16,19 @@ export const SECCIONES: { a: string; texto: string; icono: typeof Users; roles: 
   { a: '/admin/instalaciones', texto: 'Instalaciones', icono: CalendarCheck, roles: ['deportes'], grupo: 'Deportes' },
   { a: '/admin/reservas', texto: 'Reservas', icono: ListChecks, roles: ['deportes', 'seguridad'], grupo: 'Deportes' },
   { a: '/admin/actividades', texto: 'Actividades e inscritos', icono: Trophy, roles: ['deportes', 'eventos'], grupo: 'Deportes' },
+  { a: '/admin/clases', texto: 'Clases y lista de espera', icono: Dumbbell, roles: ['deportes'], grupo: 'Deportes' },
   { a: '/admin/eventos', texto: 'Eventos y entradas', icono: CalendarDays, roles: ['eventos'], grupo: 'Eventos y contenido' },
   { a: '/admin/noticias', texto: 'Noticias', icono: Newspaper, roles: ['eventos', 'deportes', 'administracion'], grupo: 'Eventos y contenido' },
   { a: '/admin/galeria', texto: 'Galería', icono: Image, roles: ['eventos'], grupo: 'Eventos y contenido' },
+  { a: '/admin/encuestas', texto: 'Encuestas', icono: Vote, roles: ['eventos'], grupo: 'Eventos y contenido' },
   { a: '/admin/notificaciones', texto: 'Enviar notificación', icono: Bell, roles: ['administracion', 'deportes', 'eventos', 'seguridad'], grupo: 'Eventos y contenido' },
   { a: '/admin/solicitudes', texto: 'Solicitudes', icono: MessageSquareText, roles: ['administracion', 'deportes', 'eventos', 'seguridad'], grupo: 'Atención al socio' },
   { a: '/admin/directorio', texto: 'Directorio', icono: Contact, roles: [], grupo: 'Configuración' },
   { a: '/admin/restaurantes', texto: 'Restaurantes', icono: UtensilsCrossed, roles: [], grupo: 'Configuración' },
   { a: '/admin/configuracion', texto: 'Datos bancarios', icono: Settings, roles: [], grupo: 'Configuración' },
   { a: '/admin/reportes', texto: 'Reportes', icono: BarChart3, roles: ['administracion'], grupo: 'Administración' },
+  { a: '/admin/estadisticas', texto: 'Estadísticas', icono: PieChart, roles: ['administracion'], grupo: 'Administración' },
+  { a: '/admin/historial', texto: 'Historial de cambios', icono: History, roles: [], grupo: 'Configuración' },
 ]
 
 export function useSecciones() {

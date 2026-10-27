@@ -1,4 +1,4 @@
-import { DollarSign, Download, FileUp, Users } from 'lucide-react'
+import { DollarSign, Download, FileUp, KeyRound, Users } from 'lucide-react'
 import { useState } from 'react'
 import { AreaTexto, Boton, Campo, Hoja, Insignia, MensajeError, Selector, Tarjeta, useAviso } from '@/components/ui'
 import { api } from '@/lib/api'
@@ -97,6 +97,38 @@ function ImportarSocios({ alTerminar }: { alTerminar: () => void }) {
   )
 }
 
+function RestablecerClave({ socio }: { socio: Socio }) {
+  const aviso = useAviso()
+  const [clave, setClave] = useState<string | null>(null)
+  const [cargando, setCargando] = useState(false)
+  async function generar() {
+    if (!confirm(`¿Generar una contraseña temporal para ${socio.nombre} ${socio.apellido}? La actual dejará de funcionar.`)) return
+    setCargando(true)
+    try {
+      setClave(await api.restablecerClaveAdmin(socio.id))
+    } catch (e) {
+      aviso((e as Error).message, 'error')
+    } finally {
+      setCargando(false)
+    }
+  }
+  return (
+    <>
+      <button onClick={generar} disabled={cargando} aria-label="Restablecer contraseña" title="Restablecer contraseña" className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-slate-500 active:bg-slate-100">
+        <KeyRound className="h-4 w-4" />
+      </button>
+      <Hoja abierta={!!clave} onCerrar={() => setClave(null)} titulo="Contraseña temporal">
+        <p className="text-sm text-slate-600">Entrégale estos datos a {socio.nombre}. Puede cambiar la contraseña desde Perfil → Cambiar contraseña.</p>
+        <div className="mt-4 space-y-2 rounded-2xl bg-elevada p-4">
+          <p className="flex justify-between text-sm"><span className="text-slate-500">Usuario</span><b>{socio.usuario}</b></p>
+          <p className="flex justify-between text-sm"><span className="text-slate-500">Contraseña</span><b className="font-mono text-base">{clave}</b></p>
+        </div>
+        <Boton bloque className="mt-4" onClick={() => { navigator.clipboard?.writeText(`Usuario: ${socio.usuario}\nContraseña temporal: ${clave}`); aviso('Copiado') }}>Copiar</Boton>
+      </Hoja>
+    </>
+  )
+}
+
 export function AdminSocios() {
   return (
     <Crud
@@ -106,6 +138,7 @@ export function AdminSocios() {
       inicial={{ estado: 'activo', rol: 'socio', parentesco: 'titular' }}
       buscar={(s, q) => `${s.nombre} ${s.apellido} ${s.accion} ${s.cedula} ${s.email}`.toLowerCase().includes(q)}
       cabecera={(recargar) => <ImportarSocios alTerminar={recargar} />}
+      acciones={(s) => s.user_id && <RestablecerClave socio={s} />}
       vista={(s) => ({
         titulo: `${s.nombre} ${s.apellido}`,
         sub: `Acción ${s.accion ?? '—'} · C.I. ${s.cedula} · ${PARENTESCOS.find((p) => p.v === s.parentesco)?.t}${s.usuario ? ` · @${s.usuario}` : ''}`,
@@ -187,6 +220,11 @@ export function AdminPagos() {
                 {p.moneda === 'VES' && <p className="text-sm text-slate-500">{fUSD(Number(p.monto_usd))} · tasa {p.tasa}</p>}
               </div>
             </div>
+            {p.lectura && (
+              <p className={`mt-2 rounded-2xl px-3 py-2 text-sm ${p.lectura.coincide ? 'bg-emerald-50 text-emerald-800' : 'bg-amber-50 text-amber-700'}`}>
+                {p.lectura.coincide ? '✓ El comprobante coincide con lo reportado' : `⚠ Revisar: en el comprobante leímos ${p.lectura.referencia ? `ref. ${p.lectura.referencia}` : 'sin referencia'} y ${p.lectura.monto != null ? `monto ${p.lectura.monto.toLocaleString('es-VE')}` : 'sin monto'}`}
+              </p>
+            )}
             {p.comprobante_url && <button onClick={() => verComprobante(p.comprobante_url!)} className="mt-2 text-sm font-medium text-azul">Ver comprobante</button>}
             {(p.cargo_ids?.length ?? 0) > 0 && (
               <div className="mt-2 rounded-2xl bg-slate-50 px-3 py-2 text-sm text-slate-600">

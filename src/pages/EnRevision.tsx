@@ -9,7 +9,7 @@ import { MarcoAcceso } from './Entrar'
 /** Lo que ve una persona registrada mientras Administración no aprueba su acceso. */
 export default function EnRevision() {
   const { registro, recargar, salir } = useAuth()
-  const [d, setD] = useState({ nombre: registro?.nombre ?? '', apellido: registro?.apellido ?? '', cedula: registro?.cedula ?? '' })
+  const [d, setD] = useState({ nombre: registro?.nombre ?? '', apellido: registro?.apellido ?? '', cedula: registro?.cedula ?? '', email: registro?.email ?? '' })
   const [error, setError] = useState('')
   const [cargando, setCargando] = useState(false)
 
@@ -54,6 +54,7 @@ export default function EnRevision() {
             <Campo etiqueta="Apellido" required value={d.apellido} onChange={(e) => setD({ ...d, apellido: e.target.value })} />
           </div>
           <Campo etiqueta="Número de cédula" inputMode="numeric" required value={d.cedula} onChange={(e) => setD({ ...d, cedula: e.target.value })} />
+          <Campo etiqueta="Correo electrónico" type="email" required value={d.email} onChange={(e) => setD({ ...d, email: e.target.value })} />
           {error && <MensajeError texto={error} />}
           <Boton type="submit" bloque cargando={cargando}>Reenviar solicitud</Boton>
         </form>

@@ -9,6 +9,21 @@ const dt = (n: number, h: string) => `${d(n)}T${h}:00-04:00`
 const ahora = new Date().toISOString()
 const base = { created_at: ahora }
 
+/** Entradas de ejemplo de los últimos 30 días, para las estadísticas */
+function accesosEjemplo(): Tablas['accesos'][] {
+  const pesos = [0, 0, 0, 0, 0, 1, 4, 8, 6, 4, 3, 3, 4, 3, 3, 5, 8, 10, 9, 6, 3, 1, 0, 0]
+  const lista: Tablas['accesos'][] = []
+  let n = 0
+  for (let d = 0; d < 30; d++)
+    for (let h = 0; h < 24; h++)
+      for (let k = 0; k < pesos[h] * (d % 7 === 5 || d % 7 === 6 ? 2 : 1); k++) {
+        const f = subDays(new Date(), d)
+        f.setHours(h, (k * 7) % 60, 0, 0)
+        lista.push({ id: `ac${n++}`, tipo: 'socio', referencia_id: null, nombre: 'Socio', resultado: 'permitido', motivo: 'Acceso permitido', created_at: f.toISOString() })
+      }
+  return lista.reverse()
+}
+
 export function semilla(): DB {
   const socios: Tablas['socios'][] = [
     { ...base, id: 's1', user_id: 'u1', usuario: 'david', accion: '1234', cedula: '12345678', nombre: 'David', apellido: 'Cohen', email: 'david@ejemplo.com', telefono: '0414-1234567', parentesco: 'titular', fecha_nacimiento: '1982-05-10', foto_url: null, estado: 'activo', rol: 'socio' },
@@ -25,14 +40,14 @@ export function semilla(): DB {
     { ...base, id: 'c1', accion: '1234', concepto: 'Cuota de mantenimiento', monto_usd: 120, fecha: mes(2), vence: mes(2), tipo: 'cuota', estado: 'pagado' },
     { ...base, id: 'c2', accion: '1234', concepto: 'Cuota de mantenimiento', monto_usd: 120, fecha: mes(1), vence: mes(1), tipo: 'cuota', estado: 'pagado' },
     { ...base, id: 'c3', accion: '1234', concepto: 'Cuota de mantenimiento', monto_usd: 120, fecha: mes(0), vence: d(10), tipo: 'cuota', estado: 'pendiente' },
-    { ...base, id: 'c4', accion: '1234', concepto: 'Academia de Tenis (Daniel)', monto_usd: 45, fecha: mes(0), vence: d(10), tipo: 'actividad', estado: 'pendiente' },
+    { ...base, id: 'c4', accion: '1234', concepto: 'Academia de Tenis (Daniel)', monto_usd: 45, fecha: mes(0), vence: d(3), tipo: 'actividad', estado: 'pendiente' },
     { ...base, id: 'c5', accion: '5678', concepto: 'Cuota de mantenimiento', monto_usd: 120, fecha: mes(0), vence: d(10), tipo: 'cuota', estado: 'pendiente' },
   ]
 
   const pagos: Tablas['pagos'][] = [
-    { ...base, id: 'p1', accion: '1234', socio_id: 's1', metodo: 'zelle', moneda: 'USD', monto: 120, tasa: null, monto_usd: 120, referencia: 'ZL-88213', fecha_pago: format(subDays(new Date(), 50), 'yyyy-MM-dd'), comprobante_url: null, cargo_ids: ['c1'], estado: 'aprobado', nota_admin: null },
-    { ...base, id: 'p2', accion: '1234', socio_id: 's1', metodo: 'pago_movil', moneda: 'VES', monto: 4380, tasa: 36.5, monto_usd: 120, referencia: '004512', fecha_pago: format(subDays(new Date(), 20), 'yyyy-MM-dd'), comprobante_url: null, cargo_ids: ['c2'], estado: 'aprobado', nota_admin: null },
-    { ...base, id: 'p3', accion: '5678', socio_id: 's7', metodo: 'transferencia_bs', moneda: 'VES', monto: 4400, tasa: 36.6, monto_usd: 120.22, referencia: '7781234', fecha_pago: d(-1), comprobante_url: null, cargo_ids: ['c5'], estado: 'pendiente', nota_admin: null },
+    { ...base, id: 'p1', accion: '1234', socio_id: 's1', metodo: 'zelle', moneda: 'USD', monto: 120, tasa: null, monto_usd: 120, referencia: 'ZL-88213', fecha_pago: format(subDays(new Date(), 50), 'yyyy-MM-dd'), comprobante_url: null, lectura: null, cargo_ids: ['c1'], estado: 'aprobado', nota_admin: null },
+    { ...base, id: 'p2', accion: '1234', socio_id: 's1', metodo: 'pago_movil', moneda: 'VES', monto: 4380, tasa: 36.5, monto_usd: 120, referencia: '004512', fecha_pago: format(subDays(new Date(), 20), 'yyyy-MM-dd'), comprobante_url: null, lectura: null, cargo_ids: ['c2'], estado: 'aprobado', nota_admin: null },
+    { ...base, id: 'p3', accion: '5678', socio_id: 's7', metodo: 'transferencia_bs', moneda: 'VES', monto: 4400, tasa: 36.6, monto_usd: 120.22, referencia: '7781234', fecha_pago: d(-1), comprobante_url: null, lectura: null, cargo_ids: ['c5'], estado: 'pendiente', nota_admin: null },
   ]
 
   const tasas: Tablas['tasas'][] = [{ ...base, id: 't1', fecha: d(0), bs_por_usd: 36.62 }]
@@ -117,12 +132,43 @@ export function semilla(): DB {
     },
   ]
 
+  // Clases de los próximos 10 días
+  const horario: [string, string, number[], string, number, string][] = [
+    ['Spinning', 'gimnasio', [1, 2, 3, 4, 5], '06:30', 12, 'Sala de spinning'],
+    ['Yoga', 'gimnasio', [2, 4, 6], '18:00', 15, 'Salón de yoga'],
+    ['Pilates', 'gimnasio', [1, 3], '19:00', 10, 'Salón de yoga'],
+    ['Zumba', 'bailes', [5], '17:00', 25, 'Salón de baile'],
+  ]
+  const clases: Tablas['clases'][] = []
+  for (let n = 0; n < 10; n++) {
+    const dia = addDays(new Date(), n)
+    for (const [nombre, dep, dias, hora, cupo, lugar] of horario)
+      if (dias.includes(dia.getDay())) clases.push({ ...base, id: `cl-${nombre}-${n}`, nombre, departamento: dep, instructor: null, lugar, inicio: `${format(dia, 'yyyy-MM-dd')}T${hora}:00-04:00`, duracion_min: 60, cupo, cancelada: false })
+  }
+  // Una clase mañana ya llena, para ver la lista de espera
+  clases.push({ ...base, id: 'cl-boxeo', nombre: 'Boxeo funcional', departamento: 'deportes', instructor: 'Prof. Miguel', lugar: 'Cancha techada', inicio: dt(1, '19:00'), duracion_min: 60, cupo: 2, cancelada: false })
+  const reservas_clase: Tablas['reservas_clase'][] = [
+    { ...base, id: 'rc1', clase_id: 'cl-boxeo', socio_id: 's7', accion: '5678', estado: 'confirmada' },
+    { ...base, id: 'rc2', clase_id: 'cl-boxeo', socio_id: 's5', accion: '0001', estado: 'confirmada' },
+  ]
+
+  const encuestas: Tablas['encuestas'][] = [
+    { ...base, id: 'en1', titulo: '¿Qué nueva actividad te gustaría?', descripcion: 'Ayúdanos a escoger la próxima academia del club.', tipo: 'opciones', opciones: ['Boxeo', 'Pilates reformer', 'Ajedrez', 'Cocina'], evento_id: null, abierta: true, cierra: null },
+    { ...base, id: 'en2', titulo: 'Califica el Kabalat Shabat comunitario', descripcion: null, tipo: 'calificacion', opciones: [], evento_id: 'e2', abierta: true, cierra: null },
+  ]
+  const votos: Tablas['votos'][] = [
+    { ...base, id: 'v1', encuesta_id: 'en1', socio_id: 's7', opcion: 0, comentario: null },
+    { ...base, id: 'v2', encuesta_id: 'en1', socio_id: 's5', opcion: 1, comentario: null },
+    { ...base, id: 'v3', encuesta_id: 'en2', socio_id: 's7', opcion: 5, comentario: '¡Muy bonito!' },
+  ]
+
   return {
     socios, cargos, pagos, tasas, instalaciones, reservas: [], actividades, inscripciones, eventos, entradas: [],
-    noticias, albumes, fotos: [], directorio, restaurantes, solicitudes, invitados: [], notificaciones, accesos: [], configuracion,
+    noticias, albumes, fotos: [], directorio, restaurantes, solicitudes, invitados: [], notificaciones, accesos: accesosEjemplo(), configuracion,
+    clases, reservas_clase, encuestas, votos, auditoria: [],
     registros: [
-      { id: 'rg1', user_id: 'u4', nombre: 'Sara', apellido: 'Cohen', cedula: '12345679', usuario: 'sara', estado: 'pendiente', motivo: null, socio_id: null, created_at: ahora },
-      { id: 'rg2', user_id: 'u5', nombre: 'Rebeca', apellido: 'Toledano', cedula: '18765432', usuario: 'rebeca.t', estado: 'pendiente', motivo: null, socio_id: null, created_at: ahora },
+      { id: 'rg1', user_id: 'u4', nombre: 'Sara', apellido: 'Cohen', cedula: '12345679', usuario: 'sara', email: 'sara@ejemplo.com', estado: 'pendiente', motivo: null, socio_id: null, created_at: ahora },
+      { id: 'rg2', user_id: 'u5', nombre: 'Rebeca', apellido: 'Toledano', cedula: '18765432', usuario: 'rebeca.t', email: 'rebeca@ejemplo.com', estado: 'pendiente', motivo: null, socio_id: null, created_at: ahora },
     ],
     claves: { u1: 'demo1234', u2: 'admin1234', u3: 'seguridad1234', u4: 'sara1234', u5: 'rebeca1234' },
     usuarios: { david: 'u1', admin: 'u2', seguridad: 'u3', sara: 'u4', 'rebeca.t': 'u5' },

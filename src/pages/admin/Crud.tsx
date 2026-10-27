@@ -8,7 +8,7 @@ import { DEPARTAMENTOS } from '@/lib/brand'
 import { useDatos } from '@/lib/useDatos'
 import type { Tabla, Tablas } from '@/lib/types'
 
-export type TipoCampo = 'texto' | 'textoLargo' | 'numero' | 'fecha' | 'fechaHora' | 'hora' | 'bool' | 'select' | 'imagen' | 'departamento'
+export type TipoCampo = 'lineas' | 'texto' | 'textoLargo' | 'numero' | 'fecha' | 'fechaHora' | 'hora' | 'bool' | 'select' | 'imagen' | 'departamento'
 
 export interface CampoDef {
   k: string
@@ -58,6 +58,7 @@ export function Crud<T extends Tabla>({ tabla, campos, vista, filtro, inicial, b
     setError('')
     const base: Record<string, any> = fila ? { ...fila } : { ...inicial }
     for (const c of campos) if (c.tipo === 'fechaHora') base[c.k] = aInputFechaHora(base[c.k] ?? null)
+    for (const c of campos) if (c.tipo === 'lineas') base[c.k] = (base[c.k] ?? []).join('\n')
     setEditando(base)
   }
 
@@ -73,6 +74,7 @@ export function Crud<T extends Tabla>({ tabla, campos, vista, filtro, inicial, b
         if (c.tipo === 'numero') v = v === '' || v == null ? null : Number(v)
         else if (c.tipo === 'fechaHora') v = deInputFechaHora(v)
         else if (c.tipo === 'bool') v = !!v
+        else if (c.tipo === 'lineas') v = String(v ?? '').split('\n').map((x) => x.trim()).filter(Boolean)
         else if (typeof v === 'string') v = v.trim() === '' ? null : v.trim()
         datos[c.k] = v ?? null
       }
@@ -164,6 +166,7 @@ export function Crud<T extends Tabla>({ tabla, campos, vista, filtro, inicial, b
               const v = editando[c.k] ?? ''
               switch (c.tipo) {
                 case 'textoLargo':
+                case 'lineas':
                   return <AreaTexto key={c.k} etiqueta={c.etiqueta} required={c.req} value={v} onChange={(e) => fijar(c.k, e.target.value)} />
                 case 'bool':
                   return (

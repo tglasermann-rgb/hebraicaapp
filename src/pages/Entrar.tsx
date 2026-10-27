@@ -57,7 +57,9 @@ export default function Entrar() {
         </span>
         <span className="rounded-full bg-azul-50 px-4 py-2 text-sm font-semibold text-azul">Registrarme</span>
       </Link>
-      <p className="mt-4 text-center text-[13px] text-slate-500">¿Olvidaste tu contraseña? Comunícate con Atención al Público.</p>
+      <p className="mt-4 text-center text-[13px]">
+        <Link to="/recuperar" className="font-semibold text-azul">¿Olvidaste tu contraseña?</Link>
+      </p>
 
       {api.modo === 'demo' && (
         <div className="mt-8 rounded-3xl bg-superficie p-4">

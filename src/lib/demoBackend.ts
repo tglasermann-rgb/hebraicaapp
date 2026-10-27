@@ -2,11 +2,11 @@ import { format } from 'date-fns'
 import { limpiarUsuario, USUARIO_VALIDO, type Backend, type Filtro, type Sesion } from './backend'
 import { obtenerTasaOficial } from './bcv'
 import { semilla, type DB } from './demoSeed'
-import type { Tabla } from './types'
+import type { Tabla, Tablas } from './types'
 
 // Modo demo: replica las reglas de supabase/migrations en el navegador para poder probar el app sin servidor.
 
-const CLAVE_DB = 'mi-hebraica-demo-v3'
+const CLAVE_DB = 'mi-hebraica-demo-v4'
 const CLAVE_SESION = 'mi-hebraica-demo-sesion'
 
 function cargar(): DB {
@@ -64,6 +64,45 @@ export function crearDemoBackend(): Backend {
   }
   const tabla = <T extends Tabla>(t: T) => db[t] as any[]
   const usados = new Set<string>() // tokens de carnet ya escaneados
+  const tokensRecuperacion = new Map<string, string>() // token → userId (demo)
+
+  // Historial de cambios (en producción lo hace un trigger en la base de datos)
+  const AUDITADAS = new Set(['socios', 'registros', 'cargos', 'pagos', 'tasas', 'instalaciones', 'actividades', 'eventos', 'noticias', 'clases', 'encuestas', 'configuracion', 'solicitudes', 'directorio', 'restaurantes', 'albumes'])
+  const auditar = (t: string, op: 'INSERT' | 'UPDATE' | 'DELETE', antes: any, despues: any) => {
+    if (!AUDITADAS.has(t)) return
+    const s = db.socios.find((x) => sesion && x.user_id === sesion.userId)
+    db.auditoria.unshift({
+      id: String(Date.now() + Math.random()), tabla: t, registro_id: (despues ?? antes)?.id ?? null, operacion: op,
+      antes: antes ? { ...antes } : null, despues: despues ? { ...despues } : null,
+      socio_id: s?.id ?? null, usuario: s ? `${s.nombre} ${s.apellido}` : 'Sistema', created_at: new Date().toISOString(),
+    })
+    db.auditoria = db.auditoria.slice(0, 500)
+  }
+
+  // Recordatorios automáticos (en producción los genera pg_cron cada mañana)
+  const generarRecordatorios = () => {
+    const hoy = format(new Date(), 'yyyy-MM-dd')
+    const mas = (n: number) => format(new Date(Date.now() + n * 864e5), 'yyyy-MM-dd')
+    const ahora = new Date().toISOString()
+    const avisar = (clave: string, n: Omit<Tablas['notificaciones'], 'id' | 'created_at' | 'clave'>) => {
+      if (db.notificaciones.some((x) => x.clave === clave)) return
+      db.notificaciones.unshift({ ...n, id: id(), clave, created_at: ahora })
+    }
+    for (const c of db.cargos.filter((c) => c.estado === 'pendiente' && c.vence)) {
+      if (c.vence === mas(3)) avisar('vence3:' + c.id, { titulo: 'Tu pago vence pronto', cuerpo: `${c.concepto} ($${c.monto_usd}) vence en 3 días.`, destino: 'accion', accion: c.accion, socio_id: null, enlace: '/cuenta' })
+      if (c.vence! < hoy) avisar('vencido:' + c.id, { titulo: 'Tienes un pago vencido', cuerpo: `${c.concepto} venció. Puedes pagarlo desde el app.`, destino: 'accion', accion: c.accion, socio_id: null, enlace: '/cuenta' })
+    }
+    for (const r of db.reservas.filter((r) => r.estado === 'confirmada' && r.fecha === mas(1))) {
+      const i = db.instalaciones.find((x) => x.id === r.instalacion_id)
+      avisar('reserva:' + r.id, { titulo: 'Tu reserva es mañana', cuerpo: `${i?.nombre} mañana a las ${r.hora_inicio}.`, destino: 'socio', accion: null, socio_id: r.socio_id, enlace: '/reservas' })
+    }
+    for (const r of db.reservas_clase.filter((r) => r.estado === 'confirmada')) {
+      const c = db.clases.find((x) => x.id === r.clase_id)
+      if (c && format(new Date(c.inicio), 'yyyy-MM-dd') === mas(1))
+        avisar('clase:' + r.id, { titulo: 'Tu clase es mañana', cuerpo: `${c.nombre} mañana a las ${format(new Date(c.inicio), 'h:mm a')}.`, destino: 'socio', accion: null, socio_id: r.socio_id, enlace: '/clases' })
+    }
+  }
+  generarRecordatorios()
 
   const backend: Backend = {
     modo: 'demo',
@@ -91,7 +130,7 @@ export function crearDemoBackend(): Backend {
       const uid = id()
       db.usuarios[usuario] = uid
       db.claves[uid] = d.clave
-      db.registros.push({ id: id(), user_id: uid, nombre: d.nombre.trim(), apellido: d.apellido.trim(), cedula, usuario, estado: 'pendiente', motivo: null, socio_id: null, created_at: new Date().toISOString() })
+      db.registros.push({ id: id(), user_id: uid, nombre: d.nombre.trim(), apellido: d.apellido.trim(), cedula, usuario, email: d.email.trim().toLowerCase(), estado: 'pendiente', motivo: null, socio_id: null, created_at: new Date().toISOString() })
       guardar()
       fijarSesion({ userId: uid, email: usuario })
     },
@@ -101,7 +140,7 @@ export function crearDemoBackend(): Backend {
     async reenviarRegistro(d) {
       const r = db.registros.find((x) => sesion && x.user_id === sesion.userId)
       if (!r) throw new Error('No encontrado')
-      Object.assign(r, { nombre: d.nombre.trim(), apellido: d.apellido.trim(), cedula: d.cedula.replace(/\D/g, ''), estado: 'pendiente', motivo: null })
+      Object.assign(r, { nombre: d.nombre.trim(), apellido: d.apellido.trim(), cedula: d.cedula.replace(/\D/g, ''), email: d.email.trim().toLowerCase(), estado: 'pendiente', motivo: null })
       guardar()
       fijarSesion(sesion)
     },
@@ -142,6 +181,7 @@ export function crearDemoBackend(): Backend {
       if (t === 'solicitudes') fila.updated_at = fila.created_at
       if (t === 'noticias') fila.publicado_en ??= fila.created_at
       tabla(t).push(fila)
+      auditar(t, 'INSERT', null, fila)
       guardar()
       return fila
     },
@@ -149,12 +189,15 @@ export function crearDemoBackend(): Backend {
       await espera()
       const fila = tabla(t).find((r) => r.id === rid)
       if (!fila) throw new Error('No encontrado')
+      const antes = { ...fila }
       Object.assign(fila, datos)
+      auditar(t, 'UPDATE', antes, fila)
       guardar()
       return fila
     },
     async eliminar(t, rid) {
       await espera()
+      auditar(t, 'DELETE', tabla(t).find((r) => r.id === rid), null)
       ;(db as any)[t] = tabla(t).filter((r) => r.id !== rid)
       guardar()
     },
@@ -263,6 +306,114 @@ export function crearDemoBackend(): Backend {
         db.cargos.push({ id: id(), accion: s.accion!, concepto: `${asistentes.length} entrada(s): ${ev.titulo}`, monto_usd: ev.precio_usd * asistentes.length, fecha: hoy(), vence: null, tipo: 'evento', estado: 'pendiente', created_at: ahora })
       guardar()
     },
+    async recuperarClave(usuario) {
+      await espera()
+      const s = db.socios.find((x) => x.usuario === limpiarUsuario(usuario))
+      if (!s?.user_id || !s.email) return null // igual que en producción: no revela si existe
+      const token = id()
+      tokensRecuperacion.set(token, s.user_id)
+      return `#/nueva-clave?token_hash=${token}` // en producción este enlace llega por correo
+    },
+    async verificarRecuperacion(tokenHash) {
+      await espera()
+      const uid = tokensRecuperacion.get(tokenHash)
+      if (!uid) throw new Error('El enlace venció o ya fue usado. Pide uno nuevo.')
+      tokensRecuperacion.delete(tokenHash)
+      fijarSesion({ userId: uid, email: '' })
+    },
+    async restablecerClaveAdmin(socioId) {
+      await espera()
+      const s = db.socios.find((x) => x.id === socioId)
+      if (!s?.user_id) throw new Error('Este socio todavía no tiene usuario en el app')
+      const clave = 'Heb-' + id().replace(/-/g, '').slice(0, 8)
+      db.claves[s.user_id] = clave
+      guardar()
+      return clave
+    },
+    async ocupacionClases(desde, hasta) {
+      await espera()
+      return db.clases
+        .filter((c) => c.inicio >= desde && c.inicio <= hasta)
+        .map((c) => {
+          const rs = db.reservas_clase.filter((r) => r.clase_id === c.id)
+          return { clase_id: c.id, confirmados: rs.filter((r) => r.estado === 'confirmada').length, en_espera: rs.filter((r) => r.estado === 'espera').length }
+        })
+    },
+    async reservarClase(claseId, socioId) {
+      await espera()
+      const yo_ = yo()
+      const c = db.clases.find((x) => x.id === claseId)
+      if (!c || c.cancelada) throw new Error('Clase no disponible')
+      if (new Date(c.inicio) < new Date()) throw new Error('La clase ya comenzó')
+      if (db.reservas_clase.some((r) => r.clase_id === claseId && r.socio_id === socioId && r.estado !== 'cancelada')) throw new Error('Ya tiene un puesto en esta clase')
+      const conf = db.reservas_clase.filter((r) => r.clase_id === claseId && r.estado === 'confirmada').length
+      const estado = conf < c.cupo ? 'confirmada' : 'espera'
+      db.reservas_clase.push({ id: id(), clase_id: claseId, socio_id: socioId, accion: yo_.accion!, estado, created_at: new Date().toISOString() })
+      guardar()
+      return estado
+    },
+    async cancelarReservaClase(reservaId) {
+      await espera()
+      const r = db.reservas_clase.find((x) => x.id === reservaId)
+      if (!r || r.estado === 'cancelada') throw new Error('Reserva no encontrada')
+      const c = db.clases.find((x) => x.id === r.clase_id)!
+      const eraConfirmada = r.estado === 'confirmada'
+      r.estado = 'cancelada'
+      if (eraConfirmada) {
+        const sig = db.reservas_clase.filter((x) => x.clase_id === r.clase_id && x.estado === 'espera').sort((a, b) => a.created_at.localeCompare(b.created_at))[0]
+        if (sig) {
+          sig.estado = 'confirmada'
+          db.notificaciones.unshift({ id: id(), titulo: '¡Tienes puesto en la clase!', cuerpo: `Se liberó un cupo en ${c.nombre}. Ya estás confirmado.`, destino: 'socio', accion: null, socio_id: sig.socio_id, enlace: '/clases', clave: 'promovido:' + sig.id, created_at: new Date().toISOString() })
+        }
+      }
+      guardar()
+    },
+    async votar(encuestaId, opcion, comentario) {
+      await espera()
+      const s = yo()
+      const e = db.encuestas.find((x) => x.id === encuestaId)
+      if (!e || !e.abierta) throw new Error('La encuesta está cerrada')
+      if (db.votos.some((v) => v.encuesta_id === encuestaId && v.socio_id === s.id)) throw new Error('Ya votaste en esta encuesta')
+      db.votos.push({ id: id(), encuesta_id: encuestaId, socio_id: s.id, opcion, comentario: comentario.trim() || null, created_at: new Date().toISOString() })
+      guardar()
+    },
+    async resultadosEncuesta(encuestaId) {
+      await espera()
+      const cuenta = new Map<number, number>()
+      for (const v of db.votos.filter((v) => v.encuesta_id === encuestaId)) cuenta.set(v.opcion, (cuenta.get(v.opcion) ?? 0) + 1)
+      return [...cuenta.entries()].sort((a, b) => a[0] - b[0]).map(([opcion, votos]) => ({ opcion, votos }))
+    },
+    async estadisticas() {
+      await espera()
+      const hoy = format(new Date(), 'yyyy-MM-dd')
+      const socios = db.socios.filter((s) => s.rol === 'socio')
+      const pend = db.cargos.filter((c) => c.estado === 'pendiente')
+      const venc = pend.filter((c) => c.vence && c.vence < hoy)
+      const contar = <T,>(l: T[], k: (x: T) => string | number) => {
+        const m = new Map<string | number, number>()
+        l.forEach((x) => m.set(k(x), (m.get(k(x)) ?? 0) + 1))
+        return m
+      }
+      const permitidos = db.accesos.filter((a) => a.resultado === 'permitido')
+      const porMetodo = new Map<string, { total: number; monto: number }>()
+      db.pagos.filter((p) => p.estado === 'aprobado').forEach((p) => {
+        const x = porMetodo.get(p.metodo) ?? { total: 0, monto: 0 }
+        porMetodo.set(p.metodo, { total: x.total + 1, monto: x.monto + Number(p.monto_usd) })
+      })
+      return {
+        socios: socios.length,
+        socios_con_app: socios.filter((s) => s.user_id).length,
+        acciones: new Set(socios.map((s) => s.accion)).size,
+        acciones_morosas: new Set(venc.map((c) => c.accion)).size,
+        monto_moroso: venc.reduce((t, c) => t + Number(c.monto_usd), 0),
+        monto_pendiente: pend.reduce((t, c) => t + Number(c.monto_usd), 0),
+        accesos_por_hora: [...contar(permitidos, (a) => new Date(a.created_at).getHours())].map(([hora, total]) => ({ hora: Number(hora), total })).sort((a, b) => a.hora - b.hora),
+        accesos_por_dia: [...contar(permitidos, (a) => ((new Date(a.created_at).getDay() + 6) % 7) + 1)].map(([dia, total]) => ({ dia: Number(dia), total })),
+        pagos_por_metodo: [...porMetodo].map(([metodo, v]) => ({ metodo: metodo as any, ...v })),
+        reservas_por_instalacion: [...contar(db.reservas.filter((r) => r.estado === 'confirmada'), (r) => db.instalaciones.find((i) => i.id === r.instalacion_id)?.nombre ?? '')]
+          .map(([nombre, total]) => ({ nombre: String(nombre), total })).sort((a, b) => b.total - a.total),
+      }
+    },
     async aprobarRegistro(registroId, accion, parentesco) {
       await espera()
       const r = db.registros.find((x) => x.id === registroId && x.estado === 'pendiente')
@@ -276,8 +427,10 @@ export function crearDemoBackend(): Backend {
       }
       s.user_id = r.user_id
       s.usuario = r.usuario
+      s.email = r.email ?? s.email
       r.estado = 'aprobado'
       r.socio_id = s.id
+      auditar('registros', 'UPDATE', { ...r, estado: 'pendiente' }, r)
       db.notificaciones.unshift({ id: id(), titulo: '¡Bienvenido a Mi Hebraica!', cuerpo: 'Tu cuenta fue aprobada. Ya puedes usar tu carnet digital.', destino: 'socio', accion: null, socio_id: s.id, enlace: '/carnet', created_at: new Date().toISOString() })
       guardar()
     },
@@ -293,7 +446,9 @@ export function crearDemoBackend(): Backend {
       await espera()
       const p = db.pagos.find((x) => x.id === pagoId)
       if (!p || p.estado !== 'pendiente') throw new Error('El pago ya fue procesado')
+      const antesPago = { ...p }
       p.estado = aprobado ? 'aprobado' : 'rechazado'
+      auditar('pagos', 'UPDATE', antesPago, p)
       if (aprobado) for (const c of db.cargos) if (p.cargo_ids?.includes(c.id) && c.accion === p.accion) c.estado = 'pagado'
       p.nota_admin = nota || null
       db.notificaciones.unshift({

@@ -1,10 +1,11 @@
-import type { Registro, ResultadoValidacion, Socio, Tabla, Tablas } from './types'
+import type { Estadisticas, Registro, ResultadoValidacion, Socio, Tabla, Tablas } from './types'
 
 export interface DatosRegistro {
   nombre: string
   apellido: string
   cedula: string
   usuario: string
+  email: string
   clave: string
 }
 
@@ -45,6 +46,10 @@ export interface Backend {
   miRegistro(): Promise<Registro | null>
   /** Corrige y reenvía una solicitud rechazada. */
   reenviarRegistro(datos: Omit<DatosRegistro, 'usuario' | 'clave'>): Promise<void>
+  /** Olvidé mi contraseña: envía un enlace al correo del socio. En demo devuelve el enlace para probarlo. */
+  recuperarClave(usuario: string): Promise<string | null>
+  /** Abre la sesión con el enlace de recuperación (luego se llama cambiarClave). */
+  verificarRecuperacion(tokenHash: string): Promise<void>
   cambiarClave(nueva: string): Promise<void>
   salir(): Promise<void>
   /** Socio vinculado al usuario autenticado. */
@@ -68,6 +73,14 @@ export interface Backend {
   revisarPago(pagoId: string, aprobado: boolean, nota: string): Promise<void>
   aprobarRegistro(registroId: string, accion: string, parentesco: string): Promise<void>
   rechazarRegistro(registroId: string, motivo: string): Promise<void>
+  /** Administración: genera una contraseña temporal para un socio. */
+  restablecerClaveAdmin(socioId: string): Promise<string>
+  ocupacionClases(desde: string, hasta: string): Promise<{ clase_id: string; confirmados: number; en_espera: number }[]>
+  reservarClase(claseId: string, socioId: string): Promise<'confirmada' | 'espera'>
+  cancelarReservaClase(reservaId: string): Promise<void>
+  votar(encuestaId: string, opcion: number, comentario: string): Promise<void>
+  resultadosEncuesta(encuestaId: string): Promise<{ opcion: number; votos: number }[]>
+  estadisticas(): Promise<Estadisticas>
   paseInvitado(codigo: string): Promise<{ nombre: string; fecha: string; anfitrion: string; estado: string } | null>
   subirArchivo(bucket: 'comprobantes' | 'publico', archivo: File): Promise<string>
   urlArchivo(bucket: 'comprobantes' | 'publico', ruta: string): Promise<string>

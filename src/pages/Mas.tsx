@@ -1,4 +1,4 @@
-import { CalendarCheck, Flame, Image, LifeBuoy, MessageSquareText, Newspaper, Phone, Settings, ShieldCheck, Ticket, Trophy, UserPlus, Users, UtensilsCrossed } from 'lucide-react'
+import { CalendarCheck, Dumbbell, Vote, Flame, Image, LifeBuoy, MessageSquareText, Newspaper, Phone, Settings, ShieldCheck, Ticket, Trophy, UserPlus, Users, UtensilsCrossed } from 'lucide-react'
 import { useAuth } from '@/auth/AuthContext'
 import { Avatar, FilaEnlace, Lista, Pagina, Seccion, Tarjeta } from '@/components/ui'
 import { NOMBRE_ROL } from '@/lib/types'
@@ -35,6 +35,7 @@ export default function Mas() {
         <Lista>
           <FilaEnlace a="/reservas" icono={<CalendarCheck className="h-5 w-5" />} titulo="Reservas" sub="Canchas, parrilleras y salones" />
           <FilaEnlace a="/actividades" icono={<Trophy className="h-5 w-5" />} titulo="Actividades y academias" />
+          <FilaEnlace a="/clases" icono={<Dumbbell className="h-5 w-5" />} titulo="Clases" sub="Spinning, yoga y más, con lista de espera" />
           <FilaEnlace a="/macabilandia" icono={<Flame className="h-5 w-5" />} titulo="Macabilandia" />
           <FilaEnlace a="/entradas" icono={<Ticket className="h-5 w-5" />} titulo="Mis entradas" />
           <FilaEnlace a="/restaurantes" icono={<UtensilsCrossed className="h-5 w-5" />} titulo="Restaurantes" sub="Horarios y ubicación" />
@@ -51,6 +52,7 @@ export default function Mas() {
         <Lista>
           <FilaEnlace a="/noticias" icono={<Newspaper className="h-5 w-5" />} titulo="Noticias" />
           <FilaEnlace a="/galeria" icono={<Image className="h-5 w-5" />} titulo="Galería de fotos" />
+          <FilaEnlace a="/encuestas" icono={<Vote className="h-5 w-5" />} titulo="Encuestas" />
           <FilaEnlace a="/directorio" icono={<Phone className="h-5 w-5" />} titulo="Directorio del club" />
           <FilaEnlace a="/ayuda" icono={<LifeBuoy className="h-5 w-5" />} titulo="Ayuda y privacidad" />
         </Lista>

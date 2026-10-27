@@ -1,4 +1,4 @@
-import { Check, Copy, Upload } from 'lucide-react'
+import { Check, Copy, ScanText, Upload } from 'lucide-react'
 import { useEffect, useState, type FormEvent } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@/auth/AuthContext'
@@ -6,6 +6,7 @@ import { Boton, Campo, MensajeError, Pagina, Selector, Tarjeta, useAviso } from 
 import { api } from '@/lib/api'
 import { estadoCuenta } from '@/lib/cuenta'
 import { fBs, fUSD, hoyISO } from '@/lib/formato'
+import { coincide, leerComprobante, type DatosComprobante } from '@/lib/comprobante'
 import { useDatos } from '@/lib/useDatos'
 import { Casilla } from './Cuenta'
 import { NOMBRE_METODO, type DatosBancarios, type MetodoPago } from '@/lib/types'
@@ -45,6 +46,8 @@ export default function ReportarPago() {
   const [referencia, setReferencia] = useState('')
   const [fecha, setFecha] = useState(hoyISO())
   const [archivo, setArchivo] = useState<File | null>(null)
+  const [lectura, setLectura] = useState<DatosComprobante | null>(null)
+  const [leyendo, setLeyendo] = useState<number | null>(null)
   const [error, setError] = useState('')
   const [enviando, setEnviando] = useState(false)
 
@@ -65,6 +68,23 @@ export default function ReportarPago() {
   useEffect(() => {
     setMonto(totalUSD > 0 ? (enBs && tasa ? (totalUSD * tasa).toFixed(2) : totalUSD.toFixed(2)) : '')
   }, [totalUSD, enBs, tasa])
+  // Lee la captura del comprobante y completa la referencia (y el monto si no estaba)
+  async function adjuntar(f: File | null) {
+    setArchivo(f)
+    setLectura(null)
+    if (!f || !f.type.startsWith('image/')) return
+    setLeyendo(0)
+    try {
+      const l = await leerComprobante(f, (p) => setLeyendo(p))
+      setLectura(l)
+      if (l.referencia) setReferencia(l.referencia)
+      if (l.monto && !monto) setMonto(String(l.monto))
+    } catch {
+      /* si no se puede leer, el socio llena los datos a mano */
+    } finally {
+      setLeyendo(null)
+    }
+  }
   const db = bancos.datos?.valor as DatosBancarios | undefined
 
   async function enviar(e: FormEvent) {
@@ -87,6 +107,7 @@ export default function ReportarPago() {
         referencia: referencia.trim(),
         fecha_pago: fecha,
         comprobante_url,
+        lectura: lectura ? { referencia: lectura.referencia, monto: lectura.monto, coincide: coincide(lectura, referencia, montoNum) } : null,
         cargo_ids: elegidos.map((x) => x.id),
         estado: 'pendiente',
         nota_admin: null,
@@ -145,16 +166,30 @@ export default function ReportarPago() {
           </Tarjeta>
         )}
 
+        <label className="flex cursor-pointer items-center gap-3 rounded-2xl border-2 border-dashed border-slate-200 bg-superficie px-4 py-4">
+          {leyendo != null ? <ScanText className="h-5 w-5 animate-pulse text-azul" /> : <Upload className="h-5 w-5 text-azul" />}
+          <span className="flex-1 text-sm text-slate-600">
+            {leyendo != null ? `Leyendo el comprobante… ${Math.round(leyendo * 100)}%` : archivo ? archivo.name : 'Sube la captura del comprobante y llenamos los datos por ti'}
+          </span>
+          <input type="file" accept="image/*,application/pdf" className="hidden" onChange={(e) => adjuntar(e.target.files?.[0] ?? null)} />
+        </label>
+        {lectura && (
+          <div className={`rounded-2xl px-4 py-3 text-sm ${lectura.referencia || lectura.monto ? (coincide(lectura, referencia, montoNum) ? 'bg-emerald-50 text-emerald-800' : 'bg-amber-50 text-amber-700') : 'bg-slate-100 text-slate-600'}`}>
+            {lectura.referencia || lectura.monto ? (
+              <>
+                <b>Leímos del comprobante:</b> {lectura.referencia ? `Ref. ${lectura.referencia}` : 'sin referencia'} · {lectura.monto != null ? `monto ${lectura.monto.toLocaleString('es-VE')}` : 'sin monto'}
+                {coincide(lectura, referencia, montoNum) ? ' ✓ coincide' : '. Revisa que la referencia y el monto de abajo sean correctos.'}
+              </>
+            ) : (
+              'No pudimos leer el comprobante. Escribe los datos a mano.'
+            )}
+          </div>
+        )}
+
         <Campo etiqueta={`Monto pagado en ${enBs ? 'bolívares' : 'dólares'}`} inputMode="decimal" required value={monto} onChange={(e) => setMonto(e.target.value)} placeholder="0,00"
           ayuda={enBs && tasa && montoNum > 0 ? `Equivale a ${fUSD(montoUSD)} a tasa BCV ${tasa}` : undefined} />
         <Campo etiqueta="Número de referencia" required value={referencia} onChange={(e) => setReferencia(e.target.value)} />
         <Campo etiqueta="Fecha del pago" type="date" required max={hoyISO()} value={fecha} onChange={(e) => setFecha(e.target.value)} />
-
-        <label className="flex cursor-pointer items-center gap-3 rounded-2xl border-2 border-dashed border-slate-200 bg-superficie px-4 py-4">
-          <Upload className="h-5 w-5 text-azul" />
-          <span className="flex-1 text-sm text-slate-600">{archivo ? archivo.name : 'Adjuntar comprobante (opcional)'}</span>
-          <input type="file" accept="image/*,application/pdf" className="hidden" onChange={(e) => setArchivo(e.target.files?.[0] ?? null)} />
-        </label>
 
         {error && <MensajeError texto={error} />}
         <Boton type="submit" bloque cargando={enviando}>Enviar reporte</Boton>
