@@ -347,9 +347,11 @@ export function crearDemoBackend(): Backend {
     async cancelarInscripcion(inscripcionId) {
       await espera()
       const i = db.inscripciones.find((x) => x.id === inscripcionId)
-      if (!i || i.accion !== yo().accion) throw new Error('No encontrada')
-      if (i.estado !== 'pendiente_pago') throw new Error('Para retirarte de una actividad pagada comunícate con el departamento')
-      if (db.pagos.some((p) => p.estado === 'pendiente' && p.cargo_ids?.includes(i.cargo_id!))) throw new Error('Tu pago está en revisión; espera la respuesta de Administración')
+      const staff = ['admin', 'deportes', 'eventos', 'administracion'].includes(yo().rol)
+      if (!i || (i.accion !== yo().accion && !staff)) throw new Error('No encontrada')
+      if (i.estado === 'activa' && i.cargo_id) throw new Error('Esta inscripción ya está pagada y no se puede borrar')
+      if (i.estado !== 'pendiente_pago' && !staff) throw new Error('Esta inscripción ya está confirmada y no se puede borrar')
+      if (db.pagos.some((p) => p.estado === 'pendiente' && p.cargo_ids?.includes(i.cargo_id!))) throw new Error('Hay un pago en revisión para esta inscripción; espera la respuesta de Administración')
       i.estado = 'cancelada'
       db.cargos = db.cargos.filter((c) => !(c.id === i.cargo_id && c.estado === 'pendiente'))
       guardar()
@@ -504,6 +506,20 @@ export function crearDemoBackend(): Backend {
       r.estado = 'rechazado'
       r.motivo = motivo.trim() || null
       guardar()
+    },
+    async eliminarCuenta(userId) {
+      await espera()
+      if (db.socios.some((s) => s.user_id === userId)) throw new Error('Esta cuenta pertenece a un socio aprobado; desactívalo desde Socios')
+      db.registros = db.registros.filter((r) => r.user_id !== userId)
+      for (const [u, uid] of Object.entries(db.usuarios)) if (uid === userId) delete db.usuarios[u]
+      delete db.claves[userId]
+      guardar()
+    },
+    async cuentasIncompletas() {
+      await espera()
+      return Object.entries(db.usuarios)
+        .filter(([, uid]) => !db.registros.some((r) => r.user_id === uid) && !db.socios.some((s) => s.user_id === uid))
+        .map(([usuario, uid]) => ({ user_id: uid, usuario, creada: null }))
     },
     async revisarPago(pagoId, aprobado, nota) {
       await espera()

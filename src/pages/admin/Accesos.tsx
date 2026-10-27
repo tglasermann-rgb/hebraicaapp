@@ -1,4 +1,4 @@
-import { CheckCircle2, UserCheck } from 'lucide-react'
+import { CheckCircle2, Trash2, UserCheck, UserX } from 'lucide-react'
 import { useState } from 'react'
 import { Boton, Campo, Insignia, Selector, Tarjeta, Vacio, useAviso } from '@/components/ui'
 import { api } from '@/lib/api'
@@ -15,9 +15,36 @@ export default function SolicitudesAcceso() {
     const socios = cedulas.length ? await api.listar('socios', { in: { cedula: cedulas } }) : []
     return regs.map((r) => ({ ...r, socio: socios.find((s) => s.cedula === r.cedula) ?? null }))
   }, [estado])
+  const incompletas = useDatos(() => api.cuentasIncompletas(), [])
+  const aviso = useAviso()
+
+  async function borrarIncompleta(userId: string, usuario: string) {
+    if (!confirm(`¿Borrar el usuario "${usuario}"? Podrá registrarse de nuevo.`)) return
+    try {
+      await api.eliminarCuenta(userId)
+      aviso('Usuario borrado')
+      incompletas.recargar()
+    } catch (e) {
+      aviso((e as Error).message, 'error')
+    }
+  }
 
   return (
     <div>
+      {!!incompletas.datos?.length && (
+        <Tarjeta className="mb-4 p-4">
+          <p className="flex items-center gap-2 font-semibold text-tinta"><UserX className="h-4 w-4 text-amber-500" />Usuarios sin solicitud</p>
+          <p className="mt-1 text-sm text-slate-500">Se crearon pero su solicitud no llegó (un registro quedó a medias). Bórralos para que la persona se registre de nuevo con ese usuario.</p>
+          <div className="mt-2 divide-y divide-white/5">
+            {incompletas.datos.map((c) => (
+              <div key={c.user_id} className="flex items-center justify-between py-2">
+                <span className="text-sm"><b>{c.usuario}</b>{c.creada && <span className="text-slate-500"> · {fHace(c.creada)}</span>}</span>
+                <button onClick={() => borrarIncompleta(c.user_id, c.usuario)} className="flex items-center gap-1 text-sm font-medium text-red-500"><Trash2 className="h-4 w-4" />Borrar</button>
+              </div>
+            ))}
+          </div>
+        </Tarjeta>
+      )}
       <Selector value={estado} onChange={(e) => setEstado(e.target.value as Registro['estado'])} className="mb-3">
         <option value="pendiente">Por aprobar</option>
         <option value="aprobado">Aprobadas</option>
@@ -64,6 +91,15 @@ function Solicitud({ r, alTerminar }: { r: Registro & { socio: { nombre: string;
       </div>
 
       {r.estado === 'rechazado' && r.motivo && <p className="mt-2 text-sm text-slate-500">Motivo: {r.motivo}</p>}
+      {r.estado === 'rechazado' && (
+        <button
+          disabled={ocupado}
+          onClick={() => confirm(`¿Borrar la solicitud y el usuario "${r.usuario}"? Podrá registrarse de nuevo.`) && correr(() => api.eliminarCuenta(r.user_id), 'Solicitud borrada')}
+          className="mt-3 flex items-center gap-1 text-sm font-medium text-red-500"
+        >
+          <Trash2 className="h-4 w-4" />Borrar solicitud
+        </button>
+      )}
 
       {r.estado === 'pendiente' && (
         <>
@@ -93,6 +129,13 @@ function Solicitud({ r, alTerminar }: { r: Registro & { socio: { nombre: string;
             <Boton variante="peligro" disabled={ocupado} onClick={() => (motivo.trim() ? correr(() => api.rechazarRegistro(r.id, motivo), 'Solicitud rechazada') : aviso('Indica el motivo del rechazo', 'error'))}>Rechazar</Boton>
             <Boton cargando={ocupado} disabled={yaTieneUsuario || (!r.socio && !accion.trim())} onClick={() => correr(() => api.aprobarRegistro(r.id, accion, parentesco), 'Acceso aprobado')}>Aprobar</Boton>
           </div>
+          <button
+            disabled={ocupado}
+            onClick={() => confirm(`¿Borrar la solicitud y el usuario "${r.usuario}"? Podrá registrarse de nuevo con los datos correctos.`) && correr(() => api.eliminarCuenta(r.user_id), 'Solicitud borrada')}
+            className="mx-auto mt-3 flex items-center gap-1 text-sm font-medium text-red-500"
+          >
+            <Trash2 className="h-4 w-4" />Borrar solicitud (se equivocó)
+          </button>
         </>
       )}
     </Tarjeta>

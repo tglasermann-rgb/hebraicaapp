@@ -58,6 +58,7 @@ export default function Mas() {
           <FilaEnlace a="/ayuda" icono={<LifeBuoy className="h-5 w-5" />} titulo="Ayuda y privacidad" />
         </Lista>
       </Seccion>
+      <p className="mt-6 text-center text-xs text-slate-500">Versión {__APP_VERSION__}</p>
     </Pagina>
   )
 }

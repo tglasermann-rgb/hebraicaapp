@@ -77,6 +77,9 @@ export interface Backend {
   revisarPago(pagoId: string, aprobado: boolean, nota: string): Promise<void>
   aprobarRegistro(registroId: string, accion: string, parentesco: string): Promise<void>
   rechazarRegistro(registroId: string, motivo: string): Promise<void>
+  /** Administración: borra un usuario sin socio (solicitud equivocada o registro a medias); el usuario queda libre. */
+  eliminarCuenta(userId: string): Promise<void>
+  cuentasIncompletas(): Promise<{ user_id: string; usuario: string; creada: string | null }[]>
   /** Administración: genera una contraseña temporal para un socio. */
   restablecerClaveAdmin(socioId: string): Promise<string>
   ocupacionClases(desde: string, hasta: string): Promise<{ clase_id: string; confirmados: number; en_espera: number }[]>

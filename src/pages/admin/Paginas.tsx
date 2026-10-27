@@ -456,12 +456,23 @@ export function AdminReservas() {
 
 function Inscritos({ actividadId }: { actividadId: string }) {
   const [abierto, setAbierto] = useState(false)
-  const { datos } = useDatos(async () => {
+  const { datos, recargar: recargarIns } = useDatos(async () => {
     if (!abierto) return []
     const ins = await api.listar('inscripciones', { eq: { actividad_id: actividadId }, in: { estado: ['activa', 'pendiente_pago'] } })
     const soc = ins.length ? await api.listar('socios', { in: { id: ins.map((i) => i.socio_id) } }) : []
     return ins.map((i) => ({ ...i, socio: soc.find((s) => s.id === i.socio_id) }))
   }, [abierto, actividadId])
+  const aviso = useAviso()
+  async function quitar(id: string, nombre: string) {
+    if (!confirm(`¿Borrar la inscripción de ${nombre}?`)) return
+    try {
+      await api.cancelarInscripcion(id)
+      aviso('Inscripción borrada')
+      recargarIns()
+    } catch (e) {
+      aviso((e as Error).message, 'error')
+    }
+  }
   return (
     <>
       <button onClick={() => setAbierto(true)} className="text-sm font-medium text-azul">Inscritos</button>
@@ -470,6 +481,10 @@ function Inscritos({ actividadId }: { actividadId: string }) {
           <p key={i.id} className="border-b border-slate-100 py-2 text-sm">
             {i.socio?.nombre} {i.socio?.apellido} · Acción {i.accion}
             {i.estado === 'pendiente_pago' && <span className="ml-2 text-xs font-medium text-amber-600">Pendiente de pago</span>}
+            {i.estado === 'activa' && i.cargo_id && <span className="ml-2 text-xs font-medium text-emerald-500">Pagada</span>}
+            {!(i.estado === 'activa' && i.cargo_id) && (
+              <button onClick={() => quitar(i.id, i.socio?.nombre ?? '')} className="float-right text-xs font-medium text-red-500">Borrar</button>
+            )}
           </p>
         ))}
         {datos?.length === 0 && <p className="py-6 text-center text-slate-500">Sin inscritos</p>}

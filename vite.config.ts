@@ -7,7 +7,8 @@ import pkg from './package.json' with { type: 'json' }
 export default defineConfig({
   // Rutas relativas: el build funciona en cualquier hosting (GitHub Pages, Netlify, Capacitor…)
   base: './',
-  define: { __APP_VERSION__: JSON.stringify(pkg.version) },
+  // La fecha de compilación permite comprobar en el teléfono si ya llegó la versión nueva
+  define: { __APP_VERSION__: JSON.stringify(`${pkg.version} · ${new Date().toISOString().slice(0, 16).replace('T', ' ')}`) },
   resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
   plugins: [
     react(),

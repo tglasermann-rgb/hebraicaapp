@@ -177,6 +177,15 @@ export function crearSupabaseBackend(url: string, key: string): Backend {
       const { error } = await sb.rpc('rechazar_registro', { p_registro: registroId, p_motivo: motivo })
       err(error)
     },
+    async eliminarCuenta(userId) {
+      const { error } = await sb.rpc('eliminar_cuenta', { p_user: userId })
+      err(error)
+    },
+    async cuentasIncompletas() {
+      const { data, error } = await sb.rpc('cuentas_incompletas')
+      err(error)
+      return data ?? []
+    },
     async restablecerClaveAdmin(socioId) {
       const { data, error } = await sb.functions.invoke('restablecer-clave', { body: { modo: 'admin', socio_id: socioId } })
       if (error || !data?.clave) throw new Error(data?.error ?? 'No se pudo restablecer la contraseña')
