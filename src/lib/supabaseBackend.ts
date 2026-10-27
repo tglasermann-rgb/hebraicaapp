@@ -37,17 +37,19 @@ export function crearSupabaseBackend(url: string, key: string): Backend {
     async registrar(d) {
       if (!USUARIO_VALIDO.test(limpiarUsuario(d.usuario))) throw new Error('El usuario debe tener de 3 a 30 letras o números (sin espacios)')
       const { data, error } = await sb.auth.signUp({ email: correoDe(d.usuario), password: d.clave })
-      if (error) throw new Error(/registered|exists/i.test(error.message) ? 'Ese usuario ya existe. Elige otro.' : error.message)
-      if (!data.session) throw new Error('Falta desactivar la confirmación por correo en Supabase (ver README).')
-      const { error: e2 } = await sb.from('registros').insert({
-        user_id: data.user!.id,
-        nombre: d.nombre.trim(),
-        apellido: d.apellido.trim(),
-        cedula: d.cedula.replace(/\D/g, ''),
-        usuario: limpiarUsuario(d.usuario),
-        email: d.email.trim().toLowerCase(),
-      })
-      if (e2) throw new Error(e2.message.includes('registro_pendiente_unico') ? 'Ya hay una solicitud en revisión con esa cédula.' : e2.message)
+      if (error && !/registered|exists/i.test(error.message)) throw new Error(error.message)
+      if (error) {
+        // El usuario ya existe: si es de esta misma persona (misma contraseña) y su solicitud no se
+        // llegó a guardar (p. ej. un intento anterior falló), la completamos en vez de dejarla trabada.
+        const { error: e1 } = await sb.auth.signInWithPassword({ email: correoDe(d.usuario), password: d.clave })
+        if (e1) throw new Error('Ese usuario ya existe. Elige otro.')
+        const { data: yaSocio } = await sb.from('socios').select('id').eq('user_id', (await sb.auth.getUser()).data.user!.id).maybeSingle()
+        if (yaSocio || (await this.miRegistro())) {
+          await sb.auth.signOut()
+          throw new Error('Ese usuario ya existe. Elige otro.')
+        }
+      } else if (!data.session) throw new Error('Falta desactivar la confirmación por correo en Supabase (ver README).')
+      await this.reenviarRegistro(d)
     },
     async miRegistro() {
       const { data: u } = await sb.auth.getUser()
@@ -58,11 +60,13 @@ export function crearSupabaseBackend(url: string, key: string): Backend {
     },
     async reenviarRegistro(d) {
       const { data: u } = await sb.auth.getUser()
-      const { error } = await sb
-        .from('registros')
-        .update({ nombre: d.nombre.trim(), apellido: d.apellido.trim(), cedula: d.cedula.replace(/\D/g, ''), email: d.email.trim().toLowerCase(), estado: 'pendiente', motivo: null })
-        .eq('user_id', u.user!.id)
-      err(error)
+      const datos = { nombre: d.nombre.trim(), apellido: d.apellido.trim(), cedula: d.cedula.replace(/\D/g, ''), email: d.email.trim().toLowerCase() }
+      const { data: actual } = await sb.from('registros').select('id').eq('user_id', u.user!.id).maybeSingle()
+      // Sin solicitud guardada (un intento anterior falló a medias): se crea ahora
+      const { error } = actual
+        ? await sb.from('registros').update({ ...datos, estado: 'pendiente', motivo: null }).eq('user_id', u.user!.id)
+        : await sb.from('registros').insert({ ...datos, user_id: u.user!.id, usuario: u.user!.email!.split('@')[0] })
+      if (error) throw new Error(error.message.includes('registro_pendiente_unico') ? 'Ya hay una solicitud en revisión con esa cédula.' : error.message)
     },
     async recuperarClave(usuario) {
       // La función responde igual exista o no el usuario, para no revelar quién está registrado

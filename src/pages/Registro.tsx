@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
+import { useAuth } from '@/auth/AuthContext'
 import { Boton, Campo, MensajeError } from '@/components/ui'
 import { api } from '@/lib/api'
 import { limpiarUsuario, USUARIO_VALIDO } from '@/lib/backend'
@@ -7,6 +8,7 @@ import { MarcoAcceso } from './Entrar'
 
 /** Primera vez: la persona crea su usuario y envía sus datos para que Administración la apruebe. */
 export default function Registro() {
+  const { recargar } = useAuth()
   const [d, setD] = useState({ nombre: '', apellido: '', cedula: '', email: '', usuario: '', clave: '', clave2: '' })
   const [error, setError] = useState('')
   const [cargando, setCargando] = useState(false)
@@ -23,6 +25,7 @@ export default function Registro() {
     setCargando(true)
     try {
       await api.registrar(d) // al terminar queda la sesión abierta y el app muestra "en revisión"
+      await recargar() // la sesión se abre antes de guardar la solicitud: volver a leerla
     } catch (err) {
       setError((err as Error).message)
       setCargando(false)

@@ -32,22 +32,23 @@ export default function EnRevision() {
     setCargando(false)
   }
 
-  if (!registro)
+  // Sin solicitud (un registro anterior quedó a medias) o rechazada: la persona completa o corrige sus datos
+  if (!registro || registro.estado === 'rechazado')
     return (
       <MarcoAcceso>
-        <h1 className="font-display text-xl font-extrabold">Cuenta sin acceso</h1>
-        <p className="mt-2 text-slate-500">Este usuario no está asociado a ningún socio. Comunícate con Atención al Público ({CLUB.email}).</p>
-        <Boton bloque className="mt-6" onClick={salir}>Salir</Boton>
-      </MarcoAcceso>
-    )
-
-  if (registro.estado === 'rechazado')
-    return (
-      <MarcoAcceso>
-        <span className="grid h-14 w-14 place-items-center rounded-2xl bg-red-50 text-red-600"><XCircle className="h-7 w-7" /></span>
-        <h1 className="mt-4 font-display text-[24px] font-extrabold">No pudimos validar tu cuenta</h1>
-        {registro.motivo && <p className="mt-2 rounded-2xl bg-superficie p-4 text-sm text-slate-700">Motivo: {registro.motivo}</p>}
-        <p className="mt-3 text-sm text-slate-500">Corrige tus datos y vuelve a enviar la solicitud.</p>
+        {registro ? (
+          <>
+            <span className="grid h-14 w-14 place-items-center rounded-2xl bg-red-50 text-red-600"><XCircle className="h-7 w-7" /></span>
+            <h1 className="mt-4 font-display text-[24px] font-extrabold">No pudimos validar tu cuenta</h1>
+            {registro.motivo && <p className="mt-2 rounded-2xl bg-superficie p-4 text-sm text-slate-700">Motivo: {registro.motivo}</p>}
+            <p className="mt-3 text-sm text-slate-500">Corrige tus datos y vuelve a enviar la solicitud.</p>
+          </>
+        ) : (
+          <>
+            <h1 className="font-display text-[24px] font-extrabold">Completa tu solicitud</h1>
+            <p className="mt-2 text-sm text-slate-500">Tu usuario ya existe, pero falta enviar tus datos para que Administración apruebe tu acceso. Si eres socio y crees que es un error, escribe a {CLUB.email}.</p>
+          </>
+        )}
         <form onSubmit={reenviar} className="mt-5 space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <Campo etiqueta="Nombre" required value={d.nombre} onChange={(e) => setD({ ...d, nombre: e.target.value })} />
@@ -56,7 +57,7 @@ export default function EnRevision() {
           <Campo etiqueta="Número de cédula" inputMode="numeric" required value={d.cedula} onChange={(e) => setD({ ...d, cedula: e.target.value })} />
           <Campo etiqueta="Correo electrónico" type="email" required value={d.email} onChange={(e) => setD({ ...d, email: e.target.value })} />
           {error && <MensajeError texto={error} />}
-          <Boton type="submit" bloque cargando={cargando}>Reenviar solicitud</Boton>
+          <Boton type="submit" bloque cargando={cargando}>{registro ? 'Reenviar solicitud' : 'Enviar solicitud'}</Boton>
         </form>
         <Boton variante="fantasma" bloque className="mt-2" onClick={salir}>Salir</Boton>
       </MarcoAcceso>

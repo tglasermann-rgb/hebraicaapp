@@ -138,8 +138,13 @@ export function crearDemoBackend(): Backend {
       return db.registros.find((x) => sesion && x.user_id === sesion.userId) ?? null
     },
     async reenviarRegistro(d) {
-      const r = db.registros.find((x) => sesion && x.user_id === sesion.userId)
-      if (!r) throw new Error('No encontrado')
+      if (!sesion) throw new Error('No autenticado')
+      let r = db.registros.find((x) => x.user_id === sesion!.userId)
+      if (!r) {
+        const usuario = Object.entries(db.usuarios).find(([, u]) => u === sesion!.userId)?.[0] ?? sesion.userId
+        r = { id: id(), created_at: new Date().toISOString(), user_id: sesion.userId, usuario, nombre: '', apellido: '', cedula: '', email: null, estado: 'pendiente', motivo: null, socio_id: null }
+        db.registros.push(r)
+      }
       Object.assign(r, { nombre: d.nombre.trim(), apellido: d.apellido.trim(), cedula: d.cedula.replace(/\D/g, ''), email: d.email.trim().toLowerCase(), estado: 'pendiente', motivo: null })
       guardar()
       fijarSesion(sesion)

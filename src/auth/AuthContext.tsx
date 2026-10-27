@@ -55,7 +55,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         registro,
         esStaff: !!socio && ROLES_STAFF.includes(socio.rol),
         tieneRol,
-        recargar: () => cargarSocio(sesion),
+        // Lee la sesión vigente (no la de este render): se llama justo después de registrarse
+        recargar: async () => cargarSocio(await api.sesionActual()),
         salir: () => api.salir(),
       }}
     >
