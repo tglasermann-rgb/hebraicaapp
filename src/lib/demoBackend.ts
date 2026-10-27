@@ -349,8 +349,8 @@ export function crearDemoBackend(): Backend {
       const i = db.inscripciones.find((x) => x.id === inscripcionId)
       const staff = ['admin', 'deportes', 'eventos', 'administracion'].includes(yo().rol)
       if (!i || (i.accion !== yo().accion && !staff)) throw new Error('No encontrada')
-      if (i.estado === 'activa' && i.cargo_id) throw new Error('Esta inscripción ya está pagada y no se puede borrar')
-      if (i.estado !== 'pendiente_pago' && !staff) throw new Error('Esta inscripción ya está confirmada y no se puede borrar')
+      if (i.estado === 'cancelada') throw new Error('La inscripción ya fue cancelada')
+      if (db.cargos.some((c) => c.id === i.cargo_id && c.estado === 'pagado')) throw new Error('Esta inscripción ya está pagada y no se puede borrar')
       if (db.pagos.some((p) => p.estado === 'pendiente' && p.cargo_ids?.includes(i.cargo_id!))) throw new Error('Hay un pago en revisión para esta inscripción; espera la respuesta de Administración')
       i.estado = 'cancelada'
       db.cargos = db.cargos.filter((c) => !(c.id === i.cargo_id && c.estado === 'pendiente'))

@@ -89,11 +89,20 @@ export function DetalleActividad() {
   const a = act.datos
   if (!a) return <Pagina titulo="Actividad" atras><Vacio titulo="No encontrada" /></Pagina>
   const d = depto(a.departamento)
-  const inscritos = new Set((insc.datos ?? []).filter((i) => i.estado === 'activa').map((i) => i.socio_id))
   const porPagar = (insc.datos ?? []).filter((i) => i.estado === 'pendiente_pago')
   const ocupados = new Set((insc.datos ?? []).map((i) => i.socio_id))
   const nombre = (sid: string) => (familia.datos ?? []).find((f) => f.id === sid)?.nombre ?? ''
   const pagar = (cargo: string | null) => navigate(`/cuenta/reportar?cargos=${cargo}`)
+  async function cancelar(insId: string) {
+    if (!confirm('¿Cancelar esta inscripción?')) return
+    try {
+      await api.cancelarInscripcion(insId)
+      aviso('Inscripción cancelada')
+      insc.recargar()
+    } catch (e) {
+      aviso((e as Error).message, 'error')
+    }
+  }
   const elegibles = (familia.datos ?? []).filter((f) => {
     const e = edad(f.fecha_nacimiento)
     return !ocupados.has(f.id) && (e == null || ((a.edad_min == null || e >= a.edad_min) && (a.edad_max == null || e <= a.edad_max)))
@@ -135,11 +144,13 @@ export function DetalleActividad() {
         {a.requisitos && <p className="mt-4 rounded-2xl bg-amber-50 px-4 py-3 text-sm text-amber-700"><b>Requisito:</b> {a.requisitos}</p>}
         {a.descripcion && <p className="mt-4 whitespace-pre-line text-slate-700">{a.descripcion}</p>}
 
-        {inscritos.size > 0 && (
-          <Tarjeta className="mt-4 bg-emerald-50 p-4 text-sm text-emerald-800 shadow-none">
-            Inscritos: {(familia.datos ?? []).filter((f) => inscritos.has(f.id)).map((f) => f.nombre).join(', ')}
+        {(insc.datos ?? []).filter((i) => i.estado === 'activa').map((i) => (
+          <Tarjeta key={i.id} className="mt-4 flex items-center gap-3 bg-emerald-50 p-4 text-sm text-emerald-800 shadow-none">
+            <span className="flex-1"><b>{nombre(i.socio_id)}</b> está inscrito{i.cargo_id ? ' · pagado' : ''}</span>
+            {/* Pagada no se puede borrar; sin costo sí */}
+            {!i.cargo_id && <button className="text-sm font-medium text-slate-500" onClick={() => cancelar(i.id)}>Cancelar</button>}
           </Tarjeta>
-        )}
+        ))}
 
         {porPagar.map((i) => {
           const revisando = (enRevision.datos ?? []).some((p) => p.cargo_ids?.includes(i.cargo_id!))
@@ -152,18 +163,7 @@ export function DetalleActividad() {
               {!revisando && (
                 <div className="mt-3 flex items-center gap-3">
                   <Boton className="flex-1" onClick={() => pagar(i.cargo_id)}>Pagar {fUSD(a.precio_usd)}</Boton>
-                  <button
-                    className="px-2 text-sm font-medium text-slate-500"
-                    onClick={async () => {
-                      try {
-                        await api.cancelarInscripcion(i.id)
-                        aviso('Inscripción cancelada')
-                        insc.recargar()
-                      } catch (e) {
-                        setError((e as Error).message)
-                      }
-                    }}
-                  >
+                  <button className="px-2 text-sm font-medium text-slate-500" onClick={() => cancelar(i.id)}>
                     Cancelar
                   </button>
                 </div>
