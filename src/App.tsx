@@ -11,6 +11,7 @@ import Agenda from './pages/Agenda'
 import Carnet from './pages/Carnet'
 import Clases from './pages/Clases'
 import Encuestas from './pages/Encuestas'
+import Normas from './pages/Normas'
 import { Album, Directorio, Galeria, Noticia, Noticias, Restaurantes } from './pages/Contenido'
 import Cuenta from './pages/Cuenta'
 import Entradas from './pages/Entradas'
@@ -42,6 +43,7 @@ const AdminClases = extra('AdminClases')
 const AdminEncuestas = extra('AdminEncuestas')
 const Estadisticas = extra('Estadisticas')
 const Historial = extra('Historial')
+const AdminNormas = extra('AdminNormas')
 const pagina = (nombre: string) => lazy(() => import('./pages/admin/Paginas').then((m) => ({ default: (m as any)[nombre] })))
 const A = Object.fromEntries(
   ['AdminSocios', 'AdminPagos', 'AdminCargos', 'AdminTasas', 'AdminInstalaciones', 'AdminReservas', 'AdminActividades', 'AdminEventos', 'AdminNoticias', 'AdminGaleria', 'AdminNotificaciones', 'AdminSolicitudes', 'AdminDirectorio', 'AdminRestaurantes', 'AdminConfiguracion', 'AdminAccesos'].map((n) => [n, pagina(n)]),
@@ -134,6 +136,7 @@ export default function App() {
                 <Route path="macabilandia" element={<Macabilandia />} />
                 <Route path="clases" element={<Clases />} />
                 <Route path="encuestas" element={<Encuestas />} />
+                <Route path="normas" element={<Normas />} />
                 <Route path="familia" element={<Familia />} />
                 <Route path="invitados" element={<Invitados />} />
                 <Route path="noticias" element={<Noticias />} />
@@ -187,6 +190,9 @@ export default function App() {
                   </Route>
                   <Route path="notificaciones" element={<A.AdminNotificaciones />} />
                   <Route path="solicitudes" element={<A.AdminSolicitudes />} />
+                  <Route element={<SoloStaff roles={['administracion', 'deportes', 'eventos']} />}>
+                    <Route path="normas" element={<AdminNormas />} />
+                  </Route>
                   <Route element={<SoloStaff roles={['admin']} />}>
                     <Route path="directorio" element={<A.AdminDirectorio />} />
                     <Route path="restaurantes" element={<A.AdminRestaurantes />} />

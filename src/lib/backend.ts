@@ -67,7 +67,9 @@ export interface Backend {
   emitirTokenCarnet(socioId: string): Promise<{ token: string; expira: string }>
   validarCodigo(codigo: string): Promise<ResultadoValidacion>
   horariosOcupados(instalacionId: string, fecha: string): Promise<string[]>
-  reservar(instalacionId: string, fecha: string, hora: string, socioId: string): Promise<void>
+  reservar(instalacionId: string, fecha: string, hora: string, socioId: string, jugadores?: string[]): Promise<void>
+  /** Cancela respetando el límite de horas de la instalación. */
+  cancelarReserva(reservaId: string): Promise<void>
   inscribir(actividadId: string, socioId: string): Promise<void>
   comprarEntradas(eventoId: string, asistentes: string[]): Promise<void>
   revisarPago(pagoId: string, aprobado: boolean, nota: string): Promise<void>

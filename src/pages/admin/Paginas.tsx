@@ -2,11 +2,12 @@ import { DollarSign, Download, FileUp, KeyRound, Users } from 'lucide-react'
 import { useState } from 'react'
 import { AreaTexto, Boton, Campo, Hoja, Insignia, MensajeError, Selector, Tarjeta, useAviso } from '@/components/ui'
 import { api } from '@/lib/api'
+import { normalizarBancos } from '@/lib/cuenta'
 import { obtenerTasaOficial } from '@/lib/bcv'
 import { depto } from '@/lib/brand'
-import { fDiaHora, fFechaCorta, fHace, fHoraTexto, fUSD, hoyISO } from '@/lib/formato'
+import { fDiaHora, fEvento, fFechaCorta, fHace, fHoraTexto, fUSD, hoyISO } from '@/lib/formato'
 import { useDatos } from '@/lib/useDatos'
-import { NOMBRE_CATEGORIA, NOMBRE_METODO, NOMBRE_ROL, type DatosBancarios, type Socio } from '@/lib/types'
+import { NOMBRE_CATEGORIA, NOMBRE_METODO, NOMBRE_ROL, type CuentaPago, type MetodoPago, type Socio } from '@/lib/types'
 import { ESTADO_SOLICITUD } from '../Solicitudes'
 import { Crud } from './Crud'
 
@@ -396,6 +397,10 @@ export function AdminInstalaciones() {
         { k: 'hora_cierre', etiqueta: 'Cierra', tipo: 'hora', req: true },
         { k: 'duracion_min', etiqueta: 'Duración de cada bloque (minutos)', tipo: 'numero', req: true },
         { k: 'max_reservas_dia', etiqueta: 'Máx. reservas por acción por día', tipo: 'numero', req: true },
+        { k: 'max_reservas_activas', etiqueta: 'Máx. reservas activas a la vez (vacío = sin límite)', tipo: 'numero' },
+        { k: 'jugadores_min', etiqueta: 'Mínimo de jugadores a registrar', tipo: 'numero' },
+        { k: 'cancelar_hasta_horas', etiqueta: 'Cancelar hasta X horas antes', tipo: 'numero' },
+        { k: 'sancion_horas', etiqueta: 'Horas sin reservar si no asiste sin cancelar', tipo: 'numero' },
         { k: 'imagen_url', etiqueta: 'Imagen', tipo: 'imagen' },
         { k: 'activo', etiqueta: 'Disponible para reservar', tipo: 'bool' },
       ]}
@@ -404,6 +409,7 @@ export function AdminInstalaciones() {
 }
 
 export function AdminReservas() {
+  const aviso = useAviso()
   const [fecha, setFecha] = useState(hoyISO())
   const inst = useDatos(() => api.listar('instalaciones'))
   const socios = useDatos(() => api.listar('socios'))
@@ -411,6 +417,7 @@ export function AdminReservas() {
     const x = l?.find((i) => i.id === id)
     return x ? `${x.nombre} ${x.apellido ?? ''}` : ''
   }
+  const ESTADO = { confirmada: ['verde', 'Confirmada'], cancelada: ['gris', 'Cancelada'], no_asistio: ['rojo', 'No asistió'] } as const
   return (
     <>
       <Campo type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} className="mb-3" />
@@ -421,9 +428,26 @@ export function AdminReservas() {
         filtro={{ eq: { fecha }, orden: { campo: 'hora_inicio' } }}
         vista={(r) => ({
           titulo: `${fHoraTexto(r.hora_inicio)} · ${nombre(r.instalacion_id, inst.datos)}`,
-          sub: `${nombre(r.socio_id, socios.datos)} · Acción ${r.accion}`,
-          extra: <Insignia color={r.estado === 'confirmada' ? 'verde' : 'gris'}>{r.estado}</Insignia>,
+          sub: `${nombre(r.socio_id, socios.datos)} · Acción ${r.accion}${r.jugadores?.length ? ` · Jugadores: ${r.jugadores.join(', ')}` : ''}`,
+          extra: <Insignia color={ESTADO[r.estado][0]}>{ESTADO[r.estado][1]}</Insignia>,
         })}
+        acciones={(r, recargar) =>
+          r.estado === 'confirmada' && (
+            <div className="flex shrink-0 flex-col items-end gap-1 text-xs font-semibold">
+              <button className="text-red-600" onClick={async () => {
+                if (!confirm('¿Marcar que no asistieron? Se aplicará la sanción de la instalación.')) return
+                await api.actualizar('reservas', r.id, { estado: 'no_asistio' })
+                aviso('Marcada como no asistió')
+                recargar()
+              }}>No asistió</button>
+              <button className="text-slate-500" onClick={async () => {
+                if (!confirm('¿Cancelar esta reserva? (p. ej. por lluvia o evento del club)')) return
+                await api.cancelarReserva(r.id).catch((e) => aviso((e as Error).message, 'error'))
+                recargar()
+              }}>Cancelar</button>
+            </div>
+          )
+        }
         campos={[]}
       />
     </>
@@ -460,7 +484,7 @@ export function AdminActividades() {
       inicial={{ inscripciones_abiertas: true, precio_usd: 0, departamento: 'deportes' }}
       buscar={(a, q) => a.nombre.toLowerCase().includes(q)}
       acciones={(a) => <Inscritos actividadId={a.id} />}
-      vista={(a) => ({ titulo: a.nombre, sub: `${depto(a.departamento).nombre}${a.programa ? ' · Macabilandia' : ''} · ${a.precio_usd > 0 ? fUSD(a.precio_usd) : 'sin costo'}` })}
+      vista={(a) => ({ titulo: a.nombre, sub: `${depto(a.departamento).nombre}${a.programa ? ' · Macabilandia' : ''} · ${a.precio_usd > 0 ? fUSD(a.precio_usd) : a.nota_precio ?? 'sin costo'}${a.horario ? ` · ${a.horario}` : ''}` })}
       campos={[
         { k: 'nombre', etiqueta: 'Nombre', req: true },
         { k: 'departamento', etiqueta: 'Departamento', tipo: 'departamento', req: true },
@@ -472,6 +496,9 @@ export function AdminActividades() {
         { k: 'edad_max', etiqueta: 'Edad máxima', tipo: 'numero' },
         { k: 'cupo', etiqueta: 'Cupo', tipo: 'numero' },
         { k: 'precio_usd', etiqueta: 'Precio (USD) — se carga a la cuenta al inscribir', tipo: 'numero', req: true },
+        { k: 'nota_precio', etiqueta: 'Texto de precio si no hay monto (p. ej. "Sin costo")' },
+        { k: 'requisitos', etiqueta: 'Requisitos (evaluación, entrevista…)', tipo: 'textoLargo' },
+        { k: 'lugar', etiqueta: 'Lugar' },
         { k: 'imagen_url', etiqueta: 'Imagen', tipo: 'imagen' },
         { k: 'inscripciones_abiertas', etiqueta: 'Inscripciones abiertas', tipo: 'bool' },
       ]}
@@ -512,12 +539,13 @@ export function AdminEventos() {
       inicial={{ destacado: false, venta_entradas: false, precio_usd: 0, departamento: 'cultura' }}
       buscar={(e, q) => e.titulo.toLowerCase().includes(q)}
       acciones={(e) => e.venta_entradas && <EntradasVendidas eventoId={e.id} />}
-      vista={(e) => ({ titulo: e.titulo, sub: `${fDiaHora(e.fecha_inicio)} · ${e.lugar ?? ''}`, extra: e.venta_entradas && <Insignia color="azul">{e.precio_usd > 0 ? fUSD(e.precio_usd) : 'Gratis'}</Insignia> })}
+      vista={(e) => ({ titulo: e.titulo, sub: [fEvento(e), e.lugar].filter(Boolean).join(' · '), extra: e.venta_entradas && <Insignia color="azul">{e.precio_usd > 0 ? fUSD(e.precio_usd) : 'Gratis'}</Insignia> })}
       campos={[
         { k: 'titulo', etiqueta: 'Título', req: true },
         { k: 'departamento', etiqueta: 'Departamento', tipo: 'departamento' },
         { k: 'fecha_inicio', etiqueta: 'Inicio', tipo: 'fechaHora', req: true },
         { k: 'fecha_fin', etiqueta: 'Fin', tipo: 'fechaHora' },
+        { k: 'todo_el_dia', etiqueta: 'Evento de día completo (sin hora)', tipo: 'bool' },
         { k: 'lugar', etiqueta: 'Lugar' },
         { k: 'descripcion', etiqueta: 'Descripción', tipo: 'textoLargo' },
         { k: 'imagen_url', etiqueta: 'Imagen / afiche', tipo: 'imagen' },
@@ -731,22 +759,20 @@ export function AdminRestaurantes() {
   )
 }
 
-const BANCOS_VACIO: DatosBancarios = {
-  pago_movil: { banco: '', telefono: '', rif: '' },
-  transferencia_bs: { banco: '', cuenta: '', titular: '', rif: '' },
-  zelle: { email: '', titular: '' },
-  transferencia_usd: { banco: '', cuenta: '', titular: '' },
-  nota: '',
-}
+const aLineas = (datos: { k: string; v: string }[]) => datos.map((d) => `${d.k}: ${d.v}`).join('\n')
+const deLineas = (t: string) =>
+  t.split('\n').map((l) => l.trim()).filter(Boolean).map((l) => {
+    const i = l.indexOf(':')
+    return i > 0 ? { k: l.slice(0, i).trim(), v: l.slice(i + 1).trim() } : { k: 'Dato', v: l }
+  })
 
+/** Métodos de pago que ve el socio al reportar un pago. */
 export function AdminConfiguracion() {
   const aviso = useAviso()
-  const { datos, setDatos } = useDatos(async () => ((await api.obtener('configuracion', 'datos_bancarios'))?.valor as DatosBancarios) ?? BANCOS_VACIO)
+  const { datos, setDatos } = useDatos(async () => normalizarBancos((await api.obtener('configuracion', 'datos_bancarios'))?.valor))
   const [guardando, setGuardando] = useState(false)
   if (!datos) return null
-  const f = (grupo: keyof DatosBancarios, k: string, etiqueta: string) => (
-    <Campo etiqueta={etiqueta} value={(datos[grupo] as any)[k]} onChange={(e) => setDatos({ ...datos, [grupo]: { ...(datos[grupo] as any), [k]: e.target.value } })} />
-  )
+  const cambiar = (n: number, c: Partial<CuentaPago>) => setDatos({ ...datos, cuentas: datos.cuentas.map((x, k) => (k === n ? { ...x, ...c } : x)) })
 
   async function guardar() {
     setGuardando(true)
@@ -754,7 +780,7 @@ export function AdminConfiguracion() {
       const existe = await api.obtener('configuracion', 'datos_bancarios')
       if (existe) await api.actualizar('configuracion', 'datos_bancarios', { valor: datos })
       else await api.crear('configuracion', { id: 'datos_bancarios', valor: datos })
-      aviso('Datos bancarios guardados')
+      aviso('Métodos de pago guardados')
     } catch (e) {
       aviso((e as Error).message, 'error')
     } finally {
@@ -764,11 +790,22 @@ export function AdminConfiguracion() {
 
   return (
     <div className="space-y-4">
-      <Tarjeta className="space-y-3 p-4"><p className="font-semibold text-tinta">Pago Móvil</p>{f('pago_movil', 'banco', 'Banco')}{f('pago_movil', 'telefono', 'Teléfono')}{f('pago_movil', 'rif', 'RIF')}</Tarjeta>
-      <Tarjeta className="space-y-3 p-4"><p className="font-semibold text-tinta">Transferencia en bolívares</p>{f('transferencia_bs', 'banco', 'Banco')}{f('transferencia_bs', 'cuenta', 'Número de cuenta')}{f('transferencia_bs', 'titular', 'Titular')}{f('transferencia_bs', 'rif', 'RIF')}</Tarjeta>
-      <Tarjeta className="space-y-3 p-4"><p className="font-semibold text-tinta">Zelle</p>{f('zelle', 'email', 'Correo')}{f('zelle', 'titular', 'Titular')}</Tarjeta>
-      <Tarjeta className="space-y-3 p-4"><p className="font-semibold text-tinta">Transferencia en dólares</p>{f('transferencia_usd', 'banco', 'Banco')}{f('transferencia_usd', 'cuenta', 'Cuenta')}{f('transferencia_usd', 'titular', 'Titular')}</Tarjeta>
-      <AreaTexto etiqueta="Nota para el socio" value={datos.nota} onChange={(e) => setDatos({ ...datos, nota: e.target.value })} />
+      <p className="text-sm text-slate-600">Estas son las cuentas que ve el socio al reportar un pago. Escribe cada dato en una línea con el formato <b>Etiqueta: valor</b>.</p>
+      {datos.cuentas.map((c, n) => (
+        <Tarjeta key={n} className="space-y-3 p-4">
+          <div className="grid grid-cols-2 gap-3">
+            <Selector etiqueta="Método" value={c.metodo} onChange={(e) => cambiar(n, { metodo: e.target.value as MetodoPago })}>
+              {Object.entries(NOMBRE_METODO).map(([k, t]) => <option key={k} value={k}>{t}</option>)}
+            </Selector>
+            <Campo etiqueta="Nombre" value={c.titulo} onChange={(e) => cambiar(n, { titulo: e.target.value })} />
+          </div>
+          <AreaTexto etiqueta="Datos (uno por línea)" rows={3} defaultValue={aLineas(c.datos)} onBlur={(e) => cambiar(n, { datos: deLineas(e.target.value) })} />
+          <Campo etiqueta="Nota (opcional)" value={c.nota ?? ''} onChange={(e) => cambiar(n, { nota: e.target.value || undefined })} />
+          <button className="text-sm font-semibold text-red-600" onClick={() => setDatos({ ...datos, cuentas: datos.cuentas.filter((_, k) => k !== n) })}>Quitar esta cuenta</button>
+        </Tarjeta>
+      ))}
+      <Boton variante="secundario" bloque onClick={() => setDatos({ ...datos, cuentas: [...datos.cuentas, { metodo: 'transferencia_bs', titulo: '', datos: [] }] })}>+ Agregar cuenta</Boton>
+      <AreaTexto etiqueta="Nota general para el socio" value={datos.nota} onChange={(e) => setDatos({ ...datos, nota: e.target.value })} />
       <Boton bloque cargando={guardando} onClick={guardar}>Guardar</Boton>
     </div>
   )

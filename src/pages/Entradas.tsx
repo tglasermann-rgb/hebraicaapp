@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '@/auth/AuthContext'
 import { Boton, Cargando, CodigoQR, Hoja, Insignia, Pagina, Tarjeta, Vacio } from '@/components/ui'
 import { api } from '@/lib/api'
-import { fDiaHora } from '@/lib/formato'
+import { fEvento } from '@/lib/formato'
 import { useDatos } from '@/lib/useDatos'
 import type { Entrada, Evento } from '@/lib/types'
 
@@ -35,7 +35,7 @@ export default function Entradas() {
                 <span className="grid h-11 w-11 place-items-center rounded-2xl bg-llama-50 text-llama"><Ticket className="h-5 w-5" /></span>
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-medium text-slate-900">{ev?.titulo}</p>
-                  <p className="truncate text-sm text-slate-500">{e.nombre_asistente}{ev && ` · ${fDiaHora(ev.fecha_inicio)}`}</p>
+                  <p className="truncate text-sm text-slate-500">{e.nombre_asistente}{ev && ` · ${fEvento(ev)}`}</p>
                 </div>
                 <Insignia color={e.estado === 'activa' ? 'verde' : 'gris'}>{e.estado === 'activa' ? 'Ver QR' : e.estado}</Insignia>
               </Tarjeta>
@@ -48,7 +48,7 @@ export default function Entradas() {
           <div className="flex flex-col items-center pb-4 text-center">
             <p className="font-display text-xl font-extrabold text-tinta">{ver.ev?.titulo}</p>
             <p className="text-slate-600">{ver.e.nombre_asistente}</p>
-            {ver.ev && <p className="text-sm text-slate-500">{fDiaHora(ver.ev.fecha_inicio)} · {ver.ev.lugar}</p>}
+            {ver.ev && <p className="text-sm text-slate-500">{fEvento(ver.ev)}{ver.ev.lugar && ` · ${ver.ev.lugar}`}</p>}
             <div className="mt-4"><CodigoQR valor={`HEB:E:${ver.e.codigo}`} tam={240} /></div>
             <p className="mt-3 text-xs text-slate-500">Presenta este código en la entrada del evento.</p>
           </div>

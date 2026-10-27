@@ -5,7 +5,7 @@ import { useAuth } from '@/auth/AuthContext'
 import { Boton, Campo, Cargando, MensajeError, Pagina, Portada, Tarjeta, useAviso } from '@/components/ui'
 import { api } from '@/lib/api'
 import { depto } from '@/lib/brand'
-import { capitalizar, fFecha, fHora, fUSD } from '@/lib/formato'
+import { capitalizar, fEvento, fFecha, fHora, fUSD } from '@/lib/formato'
 import { useDatos } from '@/lib/useDatos'
 
 export default function Evento() {
@@ -54,7 +54,7 @@ export default function Evento() {
         <Tarjeta className="-mt-8 p-4">
           <p className="text-sm font-medium" style={{ color: d.color }}>{d.nombre}</p>
           <h2 className="font-display text-[26px] font-extrabold text-tinta">{e.titulo}</h2>
-          <p className="mt-2 flex items-center gap-2 text-slate-600"><CalendarDays className="h-4 w-4" />{capitalizar(fFecha(e.fecha_inicio, "EEEE d 'de' MMMM"))} · {fHora(e.fecha_inicio)}{e.fecha_fin && ` – ${fHora(e.fecha_fin)}`}</p>
+          <p className="mt-2 flex items-center gap-2 text-slate-600"><CalendarDays className="h-4 w-4" />{e.todo_el_dia ? capitalizar(fEvento(e)) : <>{capitalizar(fFecha(e.fecha_inicio, "EEEE d 'de' MMMM"))} · {fHora(e.fecha_inicio)}{e.fecha_fin && ` – ${fHora(e.fecha_fin)}`}</>}</p>
           {e.lugar && <p className="mt-1 flex items-center gap-2 text-slate-600"><MapPin className="h-4 w-4" />{e.lugar}</p>}
         </Tarjeta>
         {e.descripcion && <p className="mt-4 whitespace-pre-line leading-relaxed text-slate-700">{e.descripcion}</p>}

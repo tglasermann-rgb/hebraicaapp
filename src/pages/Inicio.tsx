@@ -6,7 +6,7 @@ import { api } from '@/lib/api'
 import { depto } from '@/lib/brand'
 import { proximoShabat } from '@/lib/calendarioJudio'
 import { estadoCuenta } from '@/lib/cuenta'
-import { capitalizar, fBs, fDiaHora, fFecha, fHace, fHora, fUSD, hoyISO } from '@/lib/formato'
+import { capitalizar, fBs, fEvento, fFecha, fHace, fHora, fUSD, hoyISO } from '@/lib/formato'
 import { useNoLeidas } from '@/lib/notificaciones'
 import { useDatos } from '@/lib/useDatos'
 
@@ -150,7 +150,7 @@ export default function Inicio() {
                   <div className="relative -mx-4 -mb-4 bg-black/55 px-4 pb-4 pt-3">
                     <p className="text-[11px] font-semibold uppercase tracking-wider text-white/75">{depto(e.departamento).nombre}</p>
                     <p className="font-display text-[20px] font-bold leading-tight">{e.titulo}</p>
-                    <p className="mt-1 text-[13px] text-white/80">{fDiaHora(e.fecha_inicio)}</p>
+                    <p className="mt-1 text-[13px] text-white/80">{fEvento(e)}</p>
                   </div>
                 </Portada>
               </Link>

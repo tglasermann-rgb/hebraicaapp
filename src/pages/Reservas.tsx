@@ -4,7 +4,7 @@ import { CalendarCheck, Clock } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useAuth } from '@/auth/AuthContext'
-import { Boton, Cargando, FilaEnlace, Hoja, Lista, MensajeError, Pagina, Seccion, Selector, Tarjeta, Vacio, useAviso } from '@/components/ui'
+import { Boton, Campo, Cargando, FilaEnlace, Hoja, Lista, MensajeError, Pagina, Seccion, Selector, Tarjeta, Vacio, useAviso } from '@/components/ui'
 import { api } from '@/lib/api'
 import { fFecha, fHoraTexto, hoyISO } from '@/lib/formato'
 import { useDatos } from '@/lib/useDatos'
@@ -20,9 +20,13 @@ export default function Reservas() {
 
   async function cancelar(id: string) {
     if (!confirm('¿Cancelar esta reserva?')) return
-    await api.actualizar('reservas', id, { estado: 'cancelada' })
-    aviso('Reserva cancelada')
-    mias.recargar()
+    try {
+      await api.cancelarReserva(id)
+      aviso('Reserva cancelada')
+      mias.recargar()
+    } catch (e) {
+      aviso((e as Error).message, 'error')
+    }
   }
 
   return (
@@ -74,6 +78,7 @@ export function Reservar() {
   const [fecha, setFecha] = useState(hoyISO())
   const [hora, setHora] = useState<string | null>(null)
   const [quien, setQuien] = useState(socio!.id)
+  const [jugadores, setJugadores] = useState<string[]>([])
   const [error, setError] = useState('')
   const [enviando, setEnviando] = useState(false)
   const inst = useDatos(() => api.obtener('instalaciones', id!), [id])
@@ -87,12 +92,23 @@ export function Reservar() {
   const dias = Array.from({ length: 14 }, (_, n) => addDays(new Date(), n))
   const ahoraHM = format(new Date(), 'HH:mm')
   const lista = bloques(i.hora_apertura, i.hora_cierre, i.duracion_min)
+  const elegir = (h: string) => {
+    setError('')
+    if (i.jugadores_min && jugadores.length === 0) setJugadores([`${socio!.nombre} ${socio!.apellido}`, ...Array(i.jugadores_min - 1).fill('')])
+    setHora(h)
+  }
+  const reglas = [
+    i.max_reservas_activas && `Una reserva activa a la vez`,
+    i.jugadores_min && `Mínimo ${i.jugadores_min} jugadores`,
+    i.cancelar_hasta_horas && `Cancela hasta ${i.cancelar_hasta_horas} h antes`,
+    i.sancion_horas && `Si no asistes sin cancelar: ${i.sancion_horas} h sin reservar`,
+  ].filter(Boolean) as string[]
 
   async function confirmar() {
     setError('')
     setEnviando(true)
     try {
-      await api.reservar(i!.id, fecha, hora!, quien)
+      await api.reservar(i!.id, fecha, hora!, quien, jugadores)
       aviso('¡Reserva confirmada!')
       setHora(null)
       ocupados.recargar()
@@ -105,7 +121,13 @@ export function Reservar() {
 
   return (
     <Pagina titulo={i.nombre} atras>
-      {i.descripcion && <p className="mb-4 text-sm text-slate-600">{i.descripcion}</p>}
+      {reglas.length > 0 ? (
+        <div className="mb-4 rounded-3xl bg-superficie p-4">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Normas de reserva</p>
+          <ul className="space-y-1 text-sm text-slate-700">{reglas.map((x) => <li key={x}>• {x}</li>)}</ul>
+          <Link to="/normas" className="mt-2 inline-block text-sm font-semibold text-azul">Ver reglamento completo</Link>
+        </div>
+      ) : i.descripcion && <p className="mb-4 text-sm text-slate-600">{i.descripcion}</p>}
       <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
         {dias.map((d) => {
           const k = format(d, 'yyyy-MM-dd')
@@ -129,7 +151,7 @@ export function Reservar() {
             const pasado = fecha === hoyISO() && h <= ahoraHM
             const off = ocupado || pasado
             return (
-              <button key={h} disabled={off} onClick={() => setHora(h)}
+              <button key={h} disabled={off} onClick={() => elegir(h)}
                 className={`rounded-2xl py-3 text-sm font-medium ${off ? 'bg-slate-100 text-slate-400 line-through' : 'bg-superficie text-azul shadow-card active:bg-azul-50'}`}>
                 {fHoraTexto(h)}
               </button>
@@ -147,6 +169,16 @@ export function Reservar() {
         <Selector etiqueta="¿Quién usará la instalación?" className="mt-4" value={quien} onChange={(e) => setQuien(e.target.value)}>
           {(familia.datos ?? []).map((f) => <option key={f.id} value={f.id}>{f.nombre} {f.apellido}</option>)}
         </Selector>
+        {i.jugadores_min && (
+          <div className="mt-4 space-y-2">
+            <span className="block px-1 text-[13px] font-semibold text-slate-600">Jugadores (mínimo {i.jugadores_min})</span>
+            {jugadores.map((j, n) => (
+              <Campo key={n} placeholder={`Jugador ${n + 1}`} value={j} onChange={(e) => setJugadores((l) => l.map((x, k) => (k === n ? e.target.value : x)))} />
+            ))}
+            <button type="button" onClick={() => setJugadores((l) => [...l, ''])} className="text-sm font-semibold text-azul">+ Agregar jugador</button>
+            <p className="text-xs text-slate-500">Deben jugar las personas indicadas en la reserva.</p>
+          </div>
+        )}
         {error && <div className="mt-3"><MensajeError texto={error} /></div>}
         <Boton bloque className="mt-4" cargando={enviando} onClick={confirmar}>Confirmar</Boton>
         <Link to="/reservas" className="mt-3 block text-center text-sm text-slate-500">Ver mis reservas</Link>

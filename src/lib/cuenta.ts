@@ -1,5 +1,5 @@
 import { api } from './api'
-import type { Cargo, Pago, Tasa } from './types'
+import type { Cargo, CuentaPago, DatosBancarios, MetodoPago, Pago, Tasa } from './types'
 
 export interface EstadoCuenta {
   cargos: Cargo[]
@@ -39,3 +39,19 @@ export async function estadoCuenta(accion: string): Promise<EstadoCuenta> {
     tasa,
   }
 }
+
+/** Lee los datos bancarios guardados (acepta el formato anterior con campos fijos). */
+export function normalizarBancos(valor: unknown): DatosBancarios {
+  const v = (valor ?? {}) as Record<string, any>
+  if (Array.isArray(v.cuentas)) return { cuentas: v.cuentas, nota: v.nota ?? '' }
+  const cuentas: CuentaPago[] = []
+  const fila = (k: string, x?: string) => (x ? [{ k, v: x }] : [])
+  if (v.pago_movil) cuentas.push({ metodo: 'pago_movil', titulo: 'Pago Móvil', datos: [...fila('Banco', v.pago_movil.banco), ...fila('Teléfono', v.pago_movil.telefono), ...fila('RIF', v.pago_movil.rif)] })
+  if (v.transferencia_bs) cuentas.push({ metodo: 'transferencia_bs', titulo: v.transferencia_bs.banco || 'Transferencia en Bs.', datos: [...fila('Cuenta', v.transferencia_bs.cuenta), ...fila('Titular', v.transferencia_bs.titular), ...fila('RIF', v.transferencia_bs.rif)] })
+  if (v.zelle) cuentas.push({ metodo: 'zelle', titulo: 'Zelle', datos: [...fila('Correo', v.zelle.email), ...fila('Titular', v.zelle.titular)] })
+  if (v.transferencia_usd) cuentas.push({ metodo: 'transferencia_usd', titulo: v.transferencia_usd.banco || 'Transferencia en USD', datos: [...fila('Cuenta', v.transferencia_usd.cuenta), ...fila('Titular', v.transferencia_usd.titular)] })
+  return { cuentas, nota: v.nota ?? '' }
+}
+
+/** Métodos en bolívares (el monto se convierte con la tasa BCV). */
+export const METODOS_BS: MetodoPago[] = ['pago_movil', 'transferencia_bs']

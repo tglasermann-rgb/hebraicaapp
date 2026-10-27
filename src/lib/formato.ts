@@ -32,3 +32,14 @@ export function edad(nac: string | null) {
 }
 
 export const capitalizar = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
+
+/** Fecha de un evento: "sáb 12 dic · 7:30 PM", "lun 16 – mar 17 nov" o "sáb 12 dic" si es de día completo. */
+export function fEvento(e: { fecha_inicio: string; fecha_fin: string | null; todo_el_dia?: boolean }) {
+  const ini = p(e.fecha_inicio)
+  const dia = (d: Date) => format(d, 'EEE d MMM', { locale: es })
+  if (e.todo_el_dia) {
+    if (e.fecha_fin && format(p(e.fecha_fin), 'yyyy-MM-dd') !== format(ini, 'yyyy-MM-dd')) return `${dia(ini)} – ${dia(p(e.fecha_fin))}`
+    return dia(ini)
+  }
+  return fDiaHora(e.fecha_inicio)
+}

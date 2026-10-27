@@ -4,14 +4,13 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@/auth/AuthContext'
 import { Boton, Campo, MensajeError, Pagina, Selector, Tarjeta, useAviso } from '@/components/ui'
 import { api } from '@/lib/api'
-import { estadoCuenta } from '@/lib/cuenta'
+import { estadoCuenta, METODOS_BS, normalizarBancos } from '@/lib/cuenta'
 import { fBs, fUSD, hoyISO } from '@/lib/formato'
 import { coincide, leerComprobante, type DatosComprobante } from '@/lib/comprobante'
 import { useDatos } from '@/lib/useDatos'
 import { Casilla } from './Cuenta'
-import { NOMBRE_METODO, type DatosBancarios, type MetodoPago } from '@/lib/types'
+import { NOMBRE_METODO, type MetodoPago } from '@/lib/types'
 
-const EN_BS: MetodoPago[] = ['pago_movil', 'transferencia_bs']
 
 function Dato({ k, v }: { k: string; v: string }) {
   const [ok, setOk] = useState(false)
@@ -41,7 +40,7 @@ export default function ReportarPago() {
   const bancos = useDatos(() => api.obtener('configuracion', 'datos_bancarios'))
   const [params] = useSearchParams()
   const [sel, setSel] = useState<Set<string>>(new Set((params.get('cargos') ?? '').split(',').filter(Boolean)))
-  const [metodo, setMetodo] = useState<MetodoPago>('pago_movil')
+  const [metodoElegido, setMetodo] = useState<MetodoPago | null>(null)
   const [monto, setMonto] = useState('')
   const [referencia, setReferencia] = useState('')
   const [fecha, setFecha] = useState(hoyISO())
@@ -51,7 +50,12 @@ export default function ReportarPago() {
   const [error, setError] = useState('')
   const [enviando, setEnviando] = useState(false)
 
-  const enBs = EN_BS.includes(metodo)
+  const db = bancos.datos ? normalizarBancos(bancos.datos.valor) : undefined
+  // Métodos disponibles: los configurados por Administración, más pago en caja
+  const metodos = [...new Set([...(db?.cuentas ?? []).map((c) => c.metodo), 'tarjeta' as MetodoPago, 'efectivo' as MetodoPago])]
+  const metodo: MetodoPago = metodoElegido ?? metodos[0] ?? 'transferencia_bs'
+  const cuentas = (db?.cuentas ?? []).filter((c) => c.metodo === metodo)
+  const enBs = METODOS_BS.includes(metodo)
   const tasa = cuenta.datos?.tasa?.bs_por_usd ?? null
   const montoNum = Number(monto.replace(',', '.')) || 0
   const montoUSD = enBs ? (tasa ? montoNum / tasa : 0) : montoNum
@@ -85,7 +89,7 @@ export default function ReportarPago() {
       setLeyendo(null)
     }
   }
-  const db = bancos.datos?.valor as DatosBancarios | undefined
+
 
   async function enviar(e: FormEvent) {
     e.preventDefault()
@@ -149,19 +153,22 @@ export default function ReportarPago() {
         </div>
 
         <Selector etiqueta="Método de pago" value={metodo} onChange={(e) => setMetodo(e.target.value as MetodoPago)}>
-          {Object.entries(NOMBRE_METODO).map(([k, v]) => (
-            <option key={k} value={k}>{v}</option>
+          {metodos.map((k) => (
+            <option key={k} value={k}>{NOMBRE_METODO[k]}</option>
           ))}
         </Selector>
 
         {db && (
           <Tarjeta className="px-4 py-2">
             <p className="pt-1 text-xs font-medium uppercase tracking-wide text-slate-400">Datos para pagar · toca para copiar</p>
-            {metodo === 'pago_movil' && (<><Dato k="Banco" v={db.pago_movil.banco} /><Dato k="Teléfono" v={db.pago_movil.telefono} /><Dato k="RIF" v={db.pago_movil.rif} /></>)}
-            {metodo === 'transferencia_bs' && (<><Dato k="Banco" v={db.transferencia_bs.banco} /><Dato k="Cuenta" v={db.transferencia_bs.cuenta} /><Dato k="Titular" v={db.transferencia_bs.titular} /><Dato k="RIF" v={db.transferencia_bs.rif} /></>)}
-            {metodo === 'zelle' && (<><Dato k="Correo" v={db.zelle.email} /><Dato k="Titular" v={db.zelle.titular} /></>)}
-            {metodo === 'transferencia_usd' && (<><Dato k="Banco" v={db.transferencia_usd.banco} /><Dato k="Cuenta" v={db.transferencia_usd.cuenta} /><Dato k="Titular" v={db.transferencia_usd.titular} /></>)}
-            {(metodo === 'tarjeta' || metodo === 'efectivo') && <p className="py-2 text-sm text-slate-600">Paga en la caja del club y reporta aquí el número del recibo.</p>}
+            {cuentas.map((c, n) => (
+              <div key={n} className={n > 0 ? 'mt-1 border-t border-slate-100 pt-1' : ''}>
+                {(cuentas.length > 1 || c.titulo !== NOMBRE_METODO[c.metodo]) && <p className="pt-1.5 text-sm font-semibold">{c.titulo}</p>}
+                {c.datos.map((d) => <Dato key={d.k} k={d.k} v={d.v} />)}
+                {c.nota && <p className="pb-1 text-xs font-medium text-amber-700">{c.nota}</p>}
+              </div>
+            ))}
+            {cuentas.length === 0 && <p className="py-2 text-sm text-slate-600">Paga en la caja de Atención al Público y reporta aquí el número del recibo.</p>}
             {db.nota && <p className="border-t border-slate-100 py-2 text-xs text-slate-500">{db.nota}</p>}
           </Tarjeta>
         )}

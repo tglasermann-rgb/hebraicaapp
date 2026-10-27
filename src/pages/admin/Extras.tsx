@@ -219,6 +219,29 @@ export function AdminEncuestas() {
 }
 
 // ---------------------------------------------------------------------------
+// Normas
+// ---------------------------------------------------------------------------
+
+export function AdminNormas() {
+  return (
+    <Crud
+      tabla="normas"
+      nombre="norma"
+      filtro={{ orden: { campo: 'orden' } }}
+      inicial={{ departamento: 'club', orden: 100 }}
+      buscar={(n, q) => `${n.titulo} ${n.contenido}`.toLowerCase().includes(q)}
+      vista={(n) => ({ titulo: n.titulo, sub: n.departamento === 'club' ? 'Hebraica' : depto(n.departamento).nombre })}
+      campos={[
+        { k: 'titulo', etiqueta: 'Título', req: true },
+        { k: 'departamento', etiqueta: 'Departamento', tipo: 'select', req: true, opciones: [{ v: 'club', t: 'Hebraica (general)' }, ...DEPARTAMENTOS.map((d) => ({ v: d.id, t: d.nombre }))] },
+        { k: 'contenido', etiqueta: 'Contenido', tipo: 'textoLargo', req: true },
+        { k: 'orden', etiqueta: 'Orden', tipo: 'numero' },
+      ]}
+    />
+  )
+}
+
+// ---------------------------------------------------------------------------
 // Estadísticas
 // ---------------------------------------------------------------------------
 

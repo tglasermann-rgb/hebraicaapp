@@ -1,4 +1,4 @@
-import { Clock, Flame, Trophy, User, Users } from 'lucide-react'
+import { Clock, Flame, MapPin, Trophy, User, Users } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useAuth } from '@/auth/AuthContext'
@@ -8,6 +8,9 @@ import { DEPARTAMENTOS, depto } from '@/lib/brand'
 import { edad, fUSD } from '@/lib/formato'
 import { useDatos } from '@/lib/useDatos'
 import type { Actividad } from '@/lib/types'
+
+/** Precio a mostrar: monto fijo, o el texto de la guía ("Sin costo", "Costo en Atención al Público") */
+export const precio = (a: Actividad) => (a.precio_usd > 0 ? fUSD(a.precio_usd) : a.nota_precio ?? 'Incluida')
 
 const rangoEdad = (a: Actividad) =>
   a.edad_min != null && a.edad_max != null ? `${a.edad_min} a ${a.edad_max} años` : a.edad_min != null ? `Desde ${a.edad_min} años` : a.edad_max != null ? `Hasta ${a.edad_max} años` : 'Todas las edades'
@@ -24,7 +27,7 @@ function TarjetaActividad({ a }: { a: Actividad }) {
           {a.horario && <p className="truncate text-sm text-slate-500">{a.horario}</p>}
           <div className="mt-1.5 flex flex-wrap gap-1.5">
             <Insignia color="gris">{rangoEdad(a)}</Insignia>
-            <Insignia color={a.precio_usd > 0 ? 'azul' : 'verde'}>{a.precio_usd > 0 ? fUSD(a.precio_usd) : 'Incluida'}</Insignia>
+            <Insignia color={a.precio_usd > 0 ? 'azul' : a.nota_precio === 'Sin costo' ? 'verde' : 'gris'}>{a.precio_usd > 0 || a.nota_precio === 'Sin costo' ? precio(a) : 'Consultar costo'}</Insignia>
           </div>
         </div>
       </Tarjeta>
@@ -63,6 +66,7 @@ export function Macabilandia() {
       <div className="px-4 pt-4">
         <p className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-400">Inscripciones</p>
         {cargando ? <Cargando /> : !datos?.length ? <Vacio titulo="Pronto abriremos las inscripciones" texto="Te avisaremos con una notificación." /> : <div className="space-y-3">{datos.map((a) => <TarjetaActividad key={a.id} a={a} />)}</div>}
+        <Link to="/normas?d=macabilandia" className="mt-4 block rounded-3xl bg-superficie p-4 text-sm font-semibold text-azul">Ver las normas de Macabilandia →</Link>
       </div>
     </Pagina>
   )
@@ -115,10 +119,12 @@ export function DetalleActividad() {
           <div className="mt-2 space-y-1 text-sm text-slate-600">
             {a.horario && <p className="flex items-center gap-2"><Clock className="h-4 w-4" />{a.horario}</p>}
             {a.instructor && <p className="flex items-center gap-2"><User className="h-4 w-4" />{a.instructor}</p>}
+            {a.lugar && <p className="flex items-center gap-2"><MapPin className="h-4 w-4" />{a.lugar}</p>}
             <p className="flex items-center gap-2"><Users className="h-4 w-4" />{rangoEdad(a)}{a.cupo && ` · ${a.cupo} cupos`}</p>
           </div>
-          <p className="mt-3 text-lg font-semibold text-llama">{a.precio_usd > 0 ? `${fUSD(a.precio_usd)}` : 'Sin costo adicional'}</p>
+          <p className="mt-3 text-lg font-semibold text-llama">{precio(a)}</p>
         </Tarjeta>
+        {a.requisitos && <p className="mt-4 rounded-2xl bg-amber-50 px-4 py-3 text-sm text-amber-700"><b>Requisito:</b> {a.requisitos}</p>}
         {a.descripcion && <p className="mt-4 whitespace-pre-line text-slate-700">{a.descripcion}</p>}
 
         {inscritos.size > 0 && (
@@ -139,7 +145,7 @@ export function DetalleActividad() {
                 </Selector>
                 {error && <div className="mt-3"><MensajeError texto={error} /></div>}
                 <Boton bloque className="mt-3" cargando={enviando} onClick={inscribir}>Inscribir{a.precio_usd > 0 && ` · ${fUSD(a.precio_usd)}`}</Boton>
-                {a.precio_usd > 0 && <p className="mt-2 text-center text-xs text-slate-500">El monto se carga al estado de cuenta de tu acción.</p>}
+                <p className="mt-2 text-center text-xs text-slate-500">{a.precio_usd > 0 ? 'El monto se carga al estado de cuenta de tu acción.' : a.nota_precio === 'Sin costo' ? 'Actividad sin costo.' : 'Atención al Público confirmará tu inscripción y el costo, que se cargará a tu cuenta.'}</p>
               </>
             )}
           </Tarjeta>

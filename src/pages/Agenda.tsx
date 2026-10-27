@@ -6,7 +6,7 @@ import { Cargando, Pagina, Pestanas, Portada, Tarjeta, Vacio } from '@/component
 import { api } from '@/lib/api'
 import { DEPARTAMENTOS, depto } from '@/lib/brand'
 import { festividades, fechaHebrea, proximoShabat } from '@/lib/calendarioJudio'
-import { capitalizar, fDiaHora, fFecha, fHora, hoyISO } from '@/lib/formato'
+import { capitalizar, fDiaHora, fEvento, fFecha, fHora, hoyISO } from '@/lib/formato'
 import { useDatos } from '@/lib/useDatos'
 
 export default function Agenda() {
@@ -66,7 +66,7 @@ function Eventos() {
                     <p className="text-xs font-medium" style={{ color: depto(e.departamento).color }}>{depto(e.departamento).nombre}</p>
                     <p className="truncate font-medium text-slate-900">{e.titulo}</p>
                     <p className="flex items-center gap-1 text-sm text-slate-500">
-                      {fHora(e.fecha_inicio)}
+                      {e.todo_el_dia ? (e.fecha_fin ? fEvento(e) : 'Todo el día') : fHora(e.fecha_inicio)}
                       {e.lugar && (<><span>·</span><MapPin className="h-3.5 w-3.5" />{e.lugar}</>)}
                     </p>
                     {e.venta_entradas && <p className="mt-1 text-xs font-medium text-llama">Entradas disponibles en el app</p>}

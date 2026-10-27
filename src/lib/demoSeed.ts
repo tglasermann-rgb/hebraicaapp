@@ -1,4 +1,5 @@
 import { addDays, format, subDays } from 'date-fns'
+import { ACTIVIDADES, DATOS_BANCARIOS, DIRECTORIO, EVENTOS, NORMAS, REGLAS_PADEL } from './datosHebraica'
 import type { Tablas } from './types'
 
 /** Datos de ejemplo para el modo demo. Todos los nombres y montos son ficticios. */
@@ -52,35 +53,36 @@ export function semilla(): DB {
 
   const tasas: Tablas['tasas'][] = [{ ...base, id: 't1', fecha: d(0), bs_por_usd: 36.62 }]
 
+  const sinReglas = { max_reservas_activas: null, cancelar_hasta_horas: null, jugadores_min: null, sancion_horas: null }
   const instalaciones: Tablas['instalaciones'][] = [
-    { ...base, id: 'i1', nombre: 'Cancha de Tenis 1', tipo: 'Tenis', descripcion: 'Arcilla. Traer raqueta y pelotas.', imagen_url: null, hora_apertura: '06:00', hora_cierre: '21:00', duracion_min: 60, max_reservas_dia: 1, activo: true },
-    { ...base, id: 'i2', nombre: 'Cancha de Tenis 2', tipo: 'Tenis', descripcion: 'Arcilla. Iluminación nocturna.', imagen_url: null, hora_apertura: '06:00', hora_cierre: '21:00', duracion_min: 60, max_reservas_dia: 1, activo: true },
-    { ...base, id: 'i3', nombre: 'Cancha de Pádel', tipo: 'Pádel', descripcion: 'Cancha techada.', imagen_url: null, hora_apertura: '07:00', hora_cierre: '22:00', duracion_min: 90, max_reservas_dia: 1, activo: true },
-    { ...base, id: 'i4', nombre: 'Cancha de Fútbol', tipo: 'Fútbol', descripcion: 'Grama artificial, fútbol 7.', imagen_url: null, hora_apertura: '08:00', hora_cierre: '20:00', duracion_min: 60, max_reservas_dia: 1, activo: true },
-    { ...base, id: 'i5', nombre: 'Parrillera A', tipo: 'Parrillera', descripcion: 'Capacidad 25 personas. Reserva por bloque.', imagen_url: null, hora_apertura: '11:00', hora_cierre: '19:00', duracion_min: 240, max_reservas_dia: 1, activo: true },
-    { ...base, id: 'i6', nombre: 'Salón de Fiestas', tipo: 'Salón', descripcion: 'Capacidad 80 personas.', imagen_url: null, hora_apertura: '10:00', hora_cierre: '22:00', duracion_min: 240, max_reservas_dia: 1, activo: true },
+    { ...base, ...sinReglas, id: 'i1', nombre: 'Cancha de Tenis 1', tipo: 'Tenis', descripcion: 'Arcilla. Traer raqueta y pelotas.', imagen_url: null, hora_apertura: '06:00', hora_cierre: '21:00', duracion_min: 60, max_reservas_dia: 1, activo: true },
+    { ...base, ...sinReglas, id: 'i2', nombre: 'Cancha de Tenis 2', tipo: 'Tenis', descripcion: 'Arcilla. Iluminación nocturna.', imagen_url: null, hora_apertura: '06:00', hora_cierre: '21:00', duracion_min: 60, max_reservas_dia: 1, activo: true },
+    { ...base, ...sinReglas, id: 'i3', nombre: 'Cancha de Pádel', tipo: 'Pádel', descripcion: null, imagen_url: null, hora_apertura: '07:00', hora_cierre: '22:00', duracion_min: 90, max_reservas_dia: 1, activo: true, ...REGLAS_PADEL },
+    { ...base, ...sinReglas, id: 'i4', nombre: 'Cancha de Fútbol', tipo: 'Fútbol', descripcion: 'Grama artificial, fútbol 7.', imagen_url: null, hora_apertura: '08:00', hora_cierre: '20:00', duracion_min: 60, max_reservas_dia: 1, activo: true },
+    { ...base, ...sinReglas, id: 'i5', nombre: 'Parrillera A', tipo: 'Parrillera', descripcion: 'Capacidad 25 personas. Reserva por bloque.', imagen_url: null, hora_apertura: '11:00', hora_cierre: '19:00', duracion_min: 240, max_reservas_dia: 1, activo: true },
+    { ...base, ...sinReglas, id: 'i6', nombre: 'Salón de Fiestas', tipo: 'Salón', descripcion: 'Capacidad 80 personas.', imagen_url: null, hora_apertura: '10:00', hora_cierre: '22:00', duracion_min: 240, max_reservas_dia: 1, activo: true },
   ]
 
-  const actividades: Tablas['actividades'][] = [
-    { ...base, id: 'a1', departamento: 'deportes', nombre: 'Academia de Tenis', descripcion: 'Clases grupales por nivel para niños y jóvenes.', horario: 'Mar y Jue 4:00 – 5:30 pm', instructor: 'Prof. Andrés', edad_min: 6, edad_max: 17, cupo: 20, precio_usd: 45, imagen_url: null, inscripciones_abiertas: true, programa: null },
-    { ...base, id: 'a2', departamento: 'deportes', nombre: 'Natación infantil', descripcion: 'Aprende a nadar con instructores certificados.', horario: 'Lun, Mié y Vie 3:30 – 4:30 pm', instructor: 'Prof. Carla', edad_min: 4, edad_max: 12, cupo: 15, precio_usd: 50, imagen_url: null, inscripciones_abiertas: true, programa: null },
-    { ...base, id: 'a3', departamento: 'gimnasio', nombre: 'Spinning', descripcion: 'Clase de alta intensidad en el Gimnasio Galsky.', horario: 'Lun a Vie 6:30 am', instructor: null, edad_min: 16, edad_max: null, cupo: 25, precio_usd: 0, imagen_url: null, inscripciones_abiertas: true, programa: null },
-    { ...base, id: 'a4', departamento: 'bailes', nombre: 'Rikudim (bailes israelíes)', descripcion: 'Grupo de baile para jóvenes y adultos.', horario: 'Miércoles 7:00 pm', instructor: null, edad_min: 12, edad_max: null, cupo: null, precio_usd: 20, imagen_url: null, inscripciones_abiertas: true, programa: null },
-    { ...base, id: 'a5', departamento: 'brief_kohn', nombre: 'Taller de pintura', descripcion: 'Centro Creativo Brief Kohn. Materiales incluidos.', horario: 'Sábados 10:00 am', instructor: null, edad_min: 7, edad_max: 14, cupo: 12, precio_usd: 30, imagen_url: null, inscripciones_abiertas: true, programa: null },
-    { ...base, id: 'a6', departamento: 'macabilandia', nombre: 'Macabilandia – Semana 1', descripcion: 'Plan vacacional con deportes, juegos, piscina y actividades judías.', horario: 'Lun a Vie 8:00 am – 3:00 pm', instructor: null, edad_min: 4, edad_max: 12, cupo: 120, precio_usd: 90, imagen_url: null, inscripciones_abiertas: true, programa: 'macabilandia' },
-    { ...base, id: 'a7', departamento: 'macabilandia', nombre: 'Macabilandia – Semana 2', descripcion: 'Plan vacacional con deportes, juegos, piscina y actividades judías.', horario: 'Lun a Vie 8:00 am – 3:00 pm', instructor: null, edad_min: 4, edad_max: 12, cupo: 120, precio_usd: 90, imagen_url: null, inscripciones_abiertas: true, programa: 'macabilandia' },
-  ]
+  // Actividades reales de la Guía de Inscripciones 2026-2027
+  const actividades: Tablas['actividades'][] = ACTIVIDADES.map((a, i) => ({
+    ...base, ...a, id: `a${i + 1}`, precio_usd: 0, imagen_url: null, inscripciones_abiertas: true, cupo: a.cupo ?? null, programa: a.programa ?? null,
+  }))
+  const idAct = (nombre: string) => actividades.find((a) => a.nombre === nombre)!.id
 
   const inscripciones: Tablas['inscripciones'][] = [
-    { ...base, id: 'ins1', actividad_id: 'a1', socio_id: 's3', accion: '1234', estado: 'activa' },
+    { ...base, id: 'ins1', actividad_id: idAct('Tenis de Campo · Pelota Amarilla'), socio_id: 's3', accion: '1234', estado: 'activa' },
   ]
 
-  const eventos: Tablas['eventos'][] = [
-    { ...base, id: 'e1', titulo: 'Concierto Kineret', descripcion: 'Una noche de música israelí en vivo en el Anfiteatro. Entradas limitadas.', fecha_inicio: dt(12, '19:30'), fecha_fin: dt(12, '22:30'), lugar: 'Anfiteatro', imagen_url: null, departamento: 'cultura', destacado: true, venta_entradas: true, precio_usd: 15, aforo: 400, max_por_accion: 8 },
-    { ...base, id: 'e2', titulo: 'Kabalat Shabat comunitario', descripcion: 'Recibimos el Shabat juntos con canciones y una cena ligera.', fecha_inicio: dt(4, '18:00'), fecha_fin: null, lugar: 'Salón Principal', imagen_url: null, departamento: 'juventud', destacado: false, venta_entradas: false, precio_usd: 0, aforo: null, max_por_accion: null },
-    { ...base, id: 'e3', titulo: 'Torneo interno de Pádel', descripcion: 'Inscripción por parejas en la Coordinación de Deportes.', fecha_inicio: dt(9, '08:00'), fecha_fin: dt(9, '18:00'), lugar: 'Canchas de Pádel', imagen_url: null, departamento: 'deportes', destacado: false, venta_entradas: false, precio_usd: 0, aforo: null, max_por_accion: null },
-    { ...base, id: 'e4', titulo: 'Noche de cine familiar', descripcion: 'Película al aire libre junto a la piscina. Trae tu manta.', fecha_inicio: dt(18, '19:00'), fecha_fin: null, lugar: 'Área de Piscina', imagen_url: null, departamento: 'espacio', destacado: false, venta_entradas: true, precio_usd: 0, aforo: 150, max_por_accion: 6 },
-  ]
+  // Calendario real 2026-2027 (eventos de día completo)
+  const eventos: Tablas['eventos'][] = EVENTOS.map((e, i) => ({
+    ...base, id: `ev${i + 1}`, titulo: e.titulo, descripcion: e.descripcion, departamento: e.departamento, lugar: e.lugar,
+    fecha_inicio: `${e.fecha}T12:00:00-04:00`, fecha_fin: e.hasta ? `${e.hasta}T12:00:00-04:00` : null,
+    imagen_url: null, destacado: false, todo_el_dia: true, venta_entradas: false, precio_usd: 0, aforo: null, max_por_accion: null,
+  }))
+  // Solo en la demo: el Festival Kineret con venta de entradas, para mostrar esa función
+  const kineret = eventos.find((e) => e.titulo === 'Festival Kineret')!
+  Object.assign(kineret, { destacado: true, venta_entradas: true, precio_usd: 15, aforo: 400, max_por_accion: 8, todo_el_dia: false, fecha_inicio: '2027-06-27T18:00:00-04:00', lugar: 'Anfiteatro' })
+  const idEv = (titulo: string) => eventos.find((e) => e.titulo === titulo)!.id
 
   const noticias: Tablas['noticias'][] = [
     { ...base, id: 'n1', titulo: '¡Bienvenidos a Mi Hebraica!', resumen: 'Ya puedes llevar tu carnet en el teléfono, pagar tus cuotas y reservar canchas desde el app.', contenido: 'A partir de hoy todos los socios pueden usar Mi Hebraica para:\n\n• Entrar al club con el carnet digital\n• Consultar el estado de cuenta y reportar pagos\n• Reservar canchas, parrilleras y salones\n• Inscribirse en actividades y comprar entradas\n\nSi tienes dudas, escríbenos a info@hebraica.org.', imagen_url: null, departamento: 'comunicaciones', destacado: true, publicado_en: ahora },
@@ -93,17 +95,7 @@ export function semilla(): DB {
     { ...base, id: 'al2', titulo: 'Macabiada interna', fecha: d(-90), portada_url: null },
   ]
 
-  const directorio: Tablas['directorio'][] = [
-    ['Atención al Público', 'Planta baja, edificio administrativo'],
-    ['Admisión', 'Edificio administrativo'],
-    ['Administración y Cobranzas', 'Edificio administrativo'],
-    ['Comunicaciones', 'Edificio administrativo'],
-    ['Deportes', 'Coordinación de Deportes'],
-    ['Juventud y Educación', ''],
-    ['Cultura', ''],
-    ['Bienestar', ''],
-    ['Seguridad', 'Entrada principal'],
-  ].map(([dep, ub], i) => ({ ...base, id: `dir${i}`, departamento: dep, responsable: null, telefono: '(0212) 000-0000', whatsapp: null, email: 'info@hebraica.org', ubicacion: ub || null, horario: 'Lun a Vie 8:00 am – 5:00 pm', orden: i }))
+  const directorio: Tablas['directorio'][] = DIRECTORIO.map((c, i) => ({ ...base, ...c, id: `dir${i}` }))
 
   const restaurantes: Tablas['restaurantes'][] = [
     { ...base, id: 'r1', nombre: 'Restaurante (ejemplo)', descripcion: 'Edita este registro desde el panel de administración con el nombre real del restaurante.', horario: 'Mar a Dom 12:00 m – 10:00 pm', telefono: null, ubicacion: 'Área social', imagen_url: null, orden: 0 },
@@ -119,18 +111,8 @@ export function semilla(): DB {
     { ...base, id: 'no2', titulo: 'Cuota del mes disponible', cuerpo: 'Ya puedes ver y pagar la cuota de mantenimiento de este mes.', destino: 'accion', accion: '1234', socio_id: null, enlace: '/cuenta' },
   ]
 
-  const configuracion: Tablas['configuracion'][] = [
-    {
-      id: 'datos_bancarios',
-      valor: {
-        pago_movil: { banco: 'Banco (completar)', telefono: '0414-0000000', rif: 'J-00000000-0' },
-        transferencia_bs: { banco: 'Banco (completar)', cuenta: '0000-0000-00-0000000000', titular: 'Hebraica', rif: 'J-00000000-0' },
-        zelle: { email: 'pagos@ejemplo.com', titular: 'Hebraica' },
-        transferencia_usd: { banco: 'Banco (completar)', cuenta: '000000000', titular: 'Hebraica' },
-        nota: 'Los pagos en bolívares se calculan a la tasa oficial del BCV del día del pago.',
-      },
-    },
-  ]
+  const configuracion: Tablas['configuracion'][] = [{ id: 'datos_bancarios', valor: DATOS_BANCARIOS }]
+
 
   // Clases de los próximos 10 días
   const horario: [string, string, number[], string, number, string][] = [
@@ -154,7 +136,7 @@ export function semilla(): DB {
 
   const encuestas: Tablas['encuestas'][] = [
     { ...base, id: 'en1', titulo: '¿Qué nueva actividad te gustaría?', descripcion: 'Ayúdanos a escoger la próxima academia del club.', tipo: 'opciones', opciones: ['Boxeo', 'Pilates reformer', 'Ajedrez', 'Cocina'], evento_id: null, abierta: true, cierra: null },
-    { ...base, id: 'en2', titulo: 'Califica el Kabalat Shabat comunitario', descripcion: null, tipo: 'calificacion', opciones: [], evento_id: 'e2', abierta: true, cierra: null },
+    { ...base, id: 'en2', titulo: 'Califica el Shavuatón de Juventud', descripcion: null, tipo: 'calificacion', opciones: [], evento_id: idEv('Shavuatón de Juventud'), abierta: true, cierra: null },
   ]
   const votos: Tablas['votos'][] = [
     { ...base, id: 'v1', encuesta_id: 'en1', socio_id: 's7', opcion: 0, comentario: null },
@@ -166,6 +148,7 @@ export function semilla(): DB {
     socios, cargos, pagos, tasas, instalaciones, reservas: [], actividades, inscripciones, eventos, entradas: [],
     noticias, albumes, fotos: [], directorio, restaurantes, solicitudes, invitados: [], notificaciones, accesos: accesosEjemplo(), configuracion,
     clases, reservas_clase, encuestas, votos, auditoria: [],
+    normas: NORMAS.map((n, i) => ({ ...base, ...n, id: `no${i}` })),
     registros: [
       { id: 'rg1', user_id: 'u4', nombre: 'Sara', apellido: 'Cohen', cedula: '12345679', usuario: 'sara', email: 'sara@ejemplo.com', estado: 'pendiente', motivo: null, socio_id: null, created_at: ahora },
       { id: 'rg2', user_id: 'u5', nombre: 'Rebeca', apellido: 'Toledano', cedula: '18765432', usuario: 'rebeca.t', email: 'rebeca@ejemplo.com', estado: 'pendiente', motivo: null, socio_id: null, created_at: ahora },

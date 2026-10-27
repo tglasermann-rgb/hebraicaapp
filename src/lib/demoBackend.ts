@@ -6,7 +6,7 @@ import type { Tabla, Tablas } from './types'
 
 // Modo demo: replica las reglas de supabase/migrations en el navegador para poder probar el app sin servidor.
 
-const CLAVE_DB = 'mi-hebraica-demo-v4'
+const CLAVE_DB = 'mi-hebraica-demo-v5'
 const CLAVE_SESION = 'mi-hebraica-demo-sesion'
 
 function cargar(): DB {
@@ -264,16 +264,35 @@ export function crearDemoBackend(): Backend {
       await espera()
       return db.reservas.filter((r) => r.instalacion_id === instalacionId && r.fecha === fecha && r.estado === 'confirmada').map((r) => r.hora_inicio)
     },
-    async reservar(instalacionId, fecha, hora, socioId) {
+    async reservar(instalacionId, fecha, hora, socioId, jugadores = []) {
       await espera()
       const s = yo()
       const inst = db.instalaciones.find((x) => x.id === instalacionId)!
-      if (fecha < hoy()) throw new Error('No se puede reservar en fechas pasadas')
+      const inicio = (r: { fecha: string; hora_inicio: string }) => new Date(`${r.fecha}T${r.hora_inicio}:00`)
+      if (inicio({ fecha, hora_inicio: hora }) <= new Date()) throw new Error('Ese horario ya pasó')
+      const jug = jugadores.map((x) => x.trim()).filter(Boolean)
+      if (inst.jugadores_min && jug.length < inst.jugadores_min) throw new Error(`Debes indicar al menos ${inst.jugadores_min} jugadores`)
+      const mismoTipo = db.reservas.filter((r) => r.accion === s.accion && db.instalaciones.find((i) => i.id === r.instalacion_id)?.tipo === inst.tipo)
+      if (inst.sancion_horas && mismoTipo.some((r) => r.estado === 'no_asistio' && inicio(r).getTime() + inst.sancion_horas! * 36e5 > Date.now()))
+        throw new Error(`Por no asistir a una reserva sin cancelarla, no puedes reservar ${inst.tipo.toLowerCase()} por ${inst.sancion_horas} horas`)
+      if (inst.max_reservas_activas && mismoTipo.filter((r) => r.estado === 'confirmada' && inicio(r).getTime() + inst.duracion_min * 6e4 > Date.now()).length >= inst.max_reservas_activas)
+        throw new Error(`Ya tienes una reserva activa de ${inst.tipo.toLowerCase()}. Podrás reservar otra cuando termine.`)
       const mias = db.reservas.filter((r) => r.instalacion_id === instalacionId && r.fecha === fecha && r.accion === s.accion && r.estado === 'confirmada')
       if (mias.length >= inst.max_reservas_dia) throw new Error('Su acción ya alcanzó el máximo de reservas de este día')
       if (db.reservas.some((r) => r.instalacion_id === instalacionId && r.fecha === fecha && r.hora_inicio === hora && r.estado === 'confirmada'))
         throw new Error('Ese horario acaba de ser reservado por otro socio')
-      db.reservas.push({ id: id(), instalacion_id: instalacionId, socio_id: socioId, accion: s.accion!, fecha, hora_inicio: hora, estado: 'confirmada', created_at: new Date().toISOString() })
+      db.reservas.push({ id: id(), instalacion_id: instalacionId, socio_id: socioId, accion: s.accion!, fecha, hora_inicio: hora, jugadores: jug, estado: 'confirmada', created_at: new Date().toISOString() })
+      guardar()
+    },
+    async cancelarReserva(reservaId) {
+      await espera()
+      const r = db.reservas.find((x) => x.id === reservaId)
+      if (!r || r.estado !== 'confirmada') throw new Error('Reserva no encontrada')
+      const inst = db.instalaciones.find((x) => x.id === r.instalacion_id)!
+      const staff = ['admin', 'deportes'].includes(yo().rol)
+      if (!staff && inst.cancelar_hasta_horas && new Date(`${r.fecha}T${r.hora_inicio}:00`).getTime() - inst.cancelar_hasta_horas * 36e5 < Date.now())
+        throw new Error(`Solo se puede cancelar hasta ${inst.cancelar_hasta_horas} horas antes`)
+      r.estado = 'cancelada'
       guardar()
     },
     async inscribir(actividadId, socioId) {

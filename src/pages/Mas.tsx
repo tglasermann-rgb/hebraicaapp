@@ -1,4 +1,4 @@
-import { CalendarCheck, Dumbbell, Vote, Flame, Image, LifeBuoy, MessageSquareText, Newspaper, Phone, Settings, ShieldCheck, Ticket, Trophy, UserPlus, Users, UtensilsCrossed } from 'lucide-react'
+import { BookOpen, CalendarCheck, Dumbbell, Vote, Flame, Image, LifeBuoy, MessageSquareText, Newspaper, Phone, Settings, ShieldCheck, Ticket, Trophy, UserPlus, Users, UtensilsCrossed } from 'lucide-react'
 import { useAuth } from '@/auth/AuthContext'
 import { Avatar, FilaEnlace, Lista, Pagina, Seccion, Tarjeta } from '@/components/ui'
 import { NOMBRE_ROL } from '@/lib/types'
@@ -53,6 +53,7 @@ export default function Mas() {
           <FilaEnlace a="/noticias" icono={<Newspaper className="h-5 w-5" />} titulo="Noticias" />
           <FilaEnlace a="/galeria" icono={<Image className="h-5 w-5" />} titulo="Galería de fotos" />
           <FilaEnlace a="/encuestas" icono={<Vote className="h-5 w-5" />} titulo="Encuestas" />
+          <FilaEnlace a="/normas" icono={<BookOpen className="h-5 w-5" />} titulo="Normas del club" sub="Inscripciones, pádel, gimnasio, horarios…" />
           <FilaEnlace a="/directorio" icono={<Phone className="h-5 w-5" />} titulo="Directorio del club" />
           <FilaEnlace a="/ayuda" icono={<LifeBuoy className="h-5 w-5" />} titulo="Ayuda y privacidad" />
         </Lista>

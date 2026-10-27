@@ -59,13 +59,16 @@ export interface Cargo {
   created_at: string
 }
 
-export type MetodoPago = 'pago_movil' | 'zelle' | 'transferencia_bs' | 'transferencia_usd' | 'tarjeta' | 'efectivo'
+export type MetodoPago = 'pago_movil' | 'zelle' | 'transferencia_bs' | 'transferencia_usd' | 'paypal' | 'venmo' | 'pipol' | 'tarjeta' | 'efectivo'
 
 export const NOMBRE_METODO: Record<MetodoPago, string> = {
   pago_movil: 'Pago Móvil',
   zelle: 'Zelle',
   transferencia_bs: 'Transferencia en Bs.',
   transferencia_usd: 'Transferencia en USD',
+  paypal: 'PayPal',
+  venmo: 'Venmo',
+  pipol: 'Pipol Pay',
   tarjeta: 'Tarjeta (punto de venta)',
   efectivo: 'Efectivo en caja',
 }
@@ -108,6 +111,14 @@ export interface Instalacion {
   hora_cierre: string // "21:00"
   duracion_min: number
   max_reservas_dia: number
+  /** Reservas futuras simultáneas por acción (pádel: 1) */
+  max_reservas_activas: number | null
+  /** Horas antes del inicio en que todavía se puede cancelar */
+  cancelar_hasta_horas: number | null
+  /** Mínimo de jugadores a registrar en la reserva */
+  jugadores_min: number | null
+  /** Horas sin poder reservar si no asiste sin cancelar */
+  sancion_horas: number | null
   activo: boolean
   created_at: string
 }
@@ -119,7 +130,8 @@ export interface Reserva {
   accion: string
   fecha: string
   hora_inicio: string
-  estado: 'confirmada' | 'cancelada'
+  jugadores: string[]
+  estado: 'confirmada' | 'cancelada' | 'no_asistio'
   created_at: string
 }
 
@@ -134,6 +146,10 @@ export interface Actividad {
   edad_max: number | null
   cupo: number | null
   precio_usd: number
+  /** Texto cuando no hay precio fijo: "Sin costo", "Costo en Atención al Público"… */
+  nota_precio: string | null
+  requisitos: string | null
+  lugar: string | null
   imagen_url: string | null
   inscripciones_abiertas: boolean
   programa: string | null // p. ej. "macabilandia"
@@ -159,6 +175,8 @@ export interface Evento {
   imagen_url: string | null
   departamento: string | null
   destacado: boolean
+  /** Evento de día completo (sin hora) */
+  todo_el_dia: boolean
   venta_entradas: boolean
   precio_usd: number
   aforo: number | null
@@ -291,12 +309,25 @@ export interface Configuracion {
   valor: unknown
 }
 
+export interface CuentaPago {
+  metodo: MetodoPago
+  titulo: string
+  datos: { k: string; v: string }[]
+  nota?: string
+}
+
 export interface DatosBancarios {
-  pago_movil: { banco: string; telefono: string; rif: string }
-  transferencia_bs: { banco: string; cuenta: string; titular: string; rif: string }
-  zelle: { email: string; titular: string }
-  transferencia_usd: { banco: string; cuenta: string; titular: string }
+  cuentas: CuentaPago[]
   nota: string
+}
+
+export interface Norma {
+  id: string
+  titulo: string
+  departamento: string
+  contenido: string
+  orden: number
+  created_at: string
 }
 
 export interface ResultadoValidacion {
@@ -409,6 +440,7 @@ export interface Tablas {
   encuestas: Encuesta
   votos: Voto
   auditoria: Auditoria
+  normas: Norma
 }
 
 export type Tabla = keyof Tablas
