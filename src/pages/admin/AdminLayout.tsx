@@ -1,5 +1,5 @@
 import clsx from 'clsx'
-import { ArrowLeft, BarChart3, BookOpen, Dumbbell, History, PieChart, Vote, LogOut, Smartphone, Bell, CalendarCheck, CalendarDays, Contact, DollarSign, Image, LayoutDashboard, ListChecks, MessageSquareText, Newspaper, QrCode, Receipt, Settings, ShieldCheck, Trophy, UserCheck, Users, UtensilsCrossed, Wallet } from 'lucide-react'
+import { ArrowLeft, BarChart3, BookOpen, Dumbbell, History, PieChart, LogOut, Smartphone, Bell, CalendarCheck, CalendarDays, Contact, DollarSign, Image, LayoutDashboard, ListChecks, MessageSquareText, Newspaper, QrCode, Receipt, Settings, ShieldCheck, Trophy, UserCheck, Users, UtensilsCrossed, Wallet } from 'lucide-react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '@/auth/AuthContext'
 import type { Rol } from '@/lib/types'
@@ -20,9 +20,8 @@ export const SECCIONES: { a: string; texto: string; icono: typeof Users; roles: 
   { a: '/admin/eventos', texto: 'Eventos y entradas', icono: CalendarDays, roles: ['eventos'], grupo: 'Eventos y contenido' },
   { a: '/admin/noticias', texto: 'Noticias', icono: Newspaper, roles: ['eventos', 'deportes', 'administracion'], grupo: 'Eventos y contenido' },
   { a: '/admin/galeria', texto: 'Galería', icono: Image, roles: ['eventos'], grupo: 'Eventos y contenido' },
-  { a: '/admin/encuestas', texto: 'Encuestas', icono: Vote, roles: ['eventos'], grupo: 'Eventos y contenido' },
   { a: '/admin/notificaciones', texto: 'Enviar notificación', icono: Bell, roles: ['administracion', 'deportes', 'eventos', 'seguridad'], grupo: 'Eventos y contenido' },
-  { a: '/admin/solicitudes', texto: 'Solicitudes', icono: MessageSquareText, roles: ['administracion', 'deportes', 'eventos', 'seguridad'], grupo: 'Atención al socio' },
+  { a: '/admin/solicitudes', texto: 'Trámites de socios', icono: MessageSquareText, roles: ['administracion', 'deportes', 'eventos', 'seguridad'], grupo: 'Atención al socio' },
   { a: '/admin/normas', texto: 'Normas del club', icono: BookOpen, roles: ['administracion', 'deportes', 'eventos'], grupo: 'Atención al socio' },
   { a: '/admin/directorio', texto: 'Directorio', icono: Contact, roles: [], grupo: 'Configuración' },
   { a: '/admin/restaurantes', texto: 'Restaurantes', icono: UtensilsCrossed, roles: [], grupo: 'Configuración' },

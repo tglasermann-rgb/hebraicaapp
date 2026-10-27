@@ -8,7 +8,6 @@ import { depto } from '@/lib/brand'
 import { fDiaHora, fEvento, fFechaCorta, fHace, fHoraTexto, fUSD, hoyISO } from '@/lib/formato'
 import { useDatos } from '@/lib/useDatos'
 import { NOMBRE_CATEGORIA, NOMBRE_METODO, NOMBRE_ROL, type CuentaPago, type MetodoPago, type Socio } from '@/lib/types'
-import { ESTADO_SOLICITUD } from '../Solicitudes'
 import { Crud } from './Crud'
 
 const PARENTESCOS = [
@@ -708,6 +707,13 @@ export function AdminNotificaciones() {
     </div>
   )
 }
+
+const ESTADO_SOLICITUD = {
+  abierta: ['azul', 'Recibida'],
+  en_proceso: ['ambar', 'En proceso'],
+  resuelta: ['verde', 'Resuelta'],
+  cerrada: ['gris', 'Cerrada'],
+} as const
 
 export function AdminSolicitudes() {
   return (

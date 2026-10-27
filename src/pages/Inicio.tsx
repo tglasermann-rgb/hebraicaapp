@@ -1,4 +1,4 @@
-import { ArrowUpRight, Bell, CheckCircle2, Dumbbell, Vote, QrCode, ShieldCheck, CalendarCheck, Flame, MessageSquareText, Moon, Ticket, Trophy, UserPlus, Users, UtensilsCrossed } from 'lucide-react'
+import { ArrowUpRight, Bell, CheckCircle2, Dumbbell, QrCode, ShieldCheck, CalendarCheck, Flame, Moon, Ticket, Trophy, UserPlus, Users, UtensilsCrossed } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '@/auth/AuthContext'
 import { Avatar, Portada, Seccion, Tarjeta } from '@/components/ui'
@@ -21,8 +21,6 @@ const ACCESOS = [
   { a: '/invitados', icono: UserPlus, texto: 'Invitados', color: '#7B3FD1' },
   { a: '/familia', icono: Users, texto: 'Familia', color: '#293E9B' },
   { a: '/restaurantes', icono: UtensilsCrossed, texto: 'Comer', color: '#E8312F' },
-  { a: '/solicitudes', icono: MessageSquareText, texto: 'Solicitudes', color: '#1E8A4C' },
-  { a: '/encuestas', icono: Vote, texto: 'Encuestas', color: '#E3198B' },
 ]
 
 export default function Inicio() {
@@ -112,7 +110,7 @@ export default function Inicio() {
           </Link>
         ))}
       </div>
-      <div className="mt-3 grid grid-cols-4 gap-2.5">
+      <div className="mt-3 grid grid-cols-3 gap-2.5">
         {ACCESOS.filter((x) => !GRANDES.includes(x.a)).map(({ a, icono: I, texto, color }) => (
           <Link key={a} to={a} className="flex flex-col items-center gap-2 rounded-[22px] bg-superficie px-1 py-3.5 shadow-card active:scale-[.97]">
             <span className="grid h-10 w-10 place-items-center rounded-2xl" style={{ background: `${color}26`, color }}><I className="h-5 w-5" strokeWidth={2.2} /></span>

@@ -161,8 +161,6 @@ export function AdminClases() {
 }
 
 // ---------------------------------------------------------------------------
-// Encuestas
-// ---------------------------------------------------------------------------
 
 function Resultados({ encuestaId, tipo, opciones }: { encuestaId: string; tipo: string; opciones: string[] }) {
   const [abierto, setAbierto] = useState(false)

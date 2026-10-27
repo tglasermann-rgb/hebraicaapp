@@ -1,4 +1,4 @@
-import { CalendarDays, MapPin, Minus, Plus, Star, Ticket } from 'lucide-react'
+import { CalendarDays, MapPin, Minus, Plus, Ticket } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useAuth } from '@/auth/AuthContext'
@@ -14,7 +14,6 @@ export default function Evento() {
   const aviso = useAviso()
   const ev = useDatos(() => api.obtener('eventos', id!), [id])
   const mias = useDatos(() => api.listar('entradas', { eq: { evento_id: id!, accion: socio!.accion! } }), [id])
-  const encuesta = useDatos(() => api.listar('encuestas', { eq: { evento_id: id! } }), [id])
   const familia = useDatos(() => api.listar('socios', { eq: { accion: socio!.accion! } }), [socio?.accion])
   const [nombres, setNombres] = useState<string[]>([])
   const [error, setError] = useState('')
@@ -64,15 +63,6 @@ export default function Evento() {
             <Tarjeta className="mt-5 flex items-center gap-3 bg-emerald-50 p-4">
               <Ticket className="h-6 w-6 text-emerald-700" />
               <p className="flex-1 text-sm text-emerald-800">Tienes <b>{activas.length}</b> entrada(s) para este evento. Toca para ver los códigos QR.</p>
-            </Tarjeta>
-          </Link>
-        )}
-
-        {(encuesta.datos?.length ?? 0) > 0 && (
-          <Link to="/encuestas">
-            <Tarjeta className="mt-5 flex items-center gap-3 p-4">
-              <Star className="h-6 w-6 fill-amber-400 text-amber-400" />
-              <p className="flex-1 text-sm font-semibold">{pasado ? '¿Cómo estuvo? Califica este evento' : 'Este evento tiene encuesta'}</p>
             </Tarjeta>
           </Link>
         )}

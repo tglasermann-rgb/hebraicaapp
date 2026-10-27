@@ -18,7 +18,7 @@ export default function Resumen() {
       r.push({ k: 'Socios registrados', v: (await api.listar('socios')).length, a: '/admin/socios' })
     }
     if (tieneRol('deportes', 'seguridad')) r.push({ k: 'Reservas hoy', v: (await api.listar('reservas', { eq: { fecha: hoyISO(), estado: 'confirmada' } })).length, a: '/admin/reservas' })
-    r.push({ k: 'Solicitudes abiertas', v: (await api.listar('solicitudes', { in: { estado: ['abierta', 'en_proceso'] } })).length, a: '/admin/solicitudes' })
+    r.push({ k: 'Trámites abiertos', v: (await api.listar('solicitudes', { in: { estado: ['abierta', 'en_proceso'] } })).length, a: '/admin/solicitudes' })
     return r
   })
 

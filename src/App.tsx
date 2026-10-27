@@ -10,7 +10,6 @@ import Actividades, { DetalleActividad, Macabilandia } from './pages/Actividades
 import Agenda from './pages/Agenda'
 import Carnet from './pages/Carnet'
 import Clases from './pages/Clases'
-import Encuestas from './pages/Encuestas'
 import Normas from './pages/Normas'
 import { Album, Directorio, Galeria, Noticia, Noticias, Restaurantes } from './pages/Contenido'
 import Cuenta from './pages/Cuenta'
@@ -30,7 +29,6 @@ import PaseInvitado from './pages/PaseInvitado'
 import Perfil from './pages/Perfil'
 import ReportarPago from './pages/ReportarPago'
 import Reservas, { Reservar } from './pages/Reservas'
-import Solicitudes from './pages/Solicitudes'
 
 // El panel de administración se carga aparte: los socios no descargan ese código.
 const AdminLayout = lazy(() => import('./pages/admin/AdminLayout'))
@@ -40,7 +38,6 @@ const Resumen = lazy(() => import('./pages/admin/Resumen'))
 const SolicitudesAcceso = lazy(() => import('./pages/admin/Accesos'))
 const extra = (nombre: string) => lazy(() => import('./pages/admin/Extras').then((m) => ({ default: (m as any)[nombre] })))
 const AdminClases = extra('AdminClases')
-const AdminEncuestas = extra('AdminEncuestas')
 const Estadisticas = extra('Estadisticas')
 const Historial = extra('Historial')
 const AdminNormas = extra('AdminNormas')
@@ -135,7 +132,6 @@ export default function App() {
                 <Route path="actividades/:id" element={<DetalleActividad />} />
                 <Route path="macabilandia" element={<Macabilandia />} />
                 <Route path="clases" element={<Clases />} />
-                <Route path="encuestas" element={<Encuestas />} />
                 <Route path="normas" element={<Normas />} />
                 <Route path="familia" element={<Familia />} />
                 <Route path="invitados" element={<Invitados />} />
@@ -145,7 +141,6 @@ export default function App() {
                 <Route path="galeria/:id" element={<Album />} />
                 <Route path="directorio" element={<Directorio />} />
                 <Route path="restaurantes" element={<Restaurantes />} />
-                <Route path="solicitudes" element={<Solicitudes />} />
                 <Route path="notificaciones" element={<Notificaciones />} />
                 <Route path="mas" element={<Mas />} />
                 <Route path="perfil" element={<Perfil />} />
@@ -183,7 +178,6 @@ export default function App() {
                   <Route element={<SoloStaff roles={['eventos']} />}>
                     <Route path="eventos" element={<A.AdminEventos />} />
                     <Route path="galeria" element={<A.AdminGaleria />} />
-                    <Route path="encuestas" element={<AdminEncuestas />} />
                   </Route>
                   <Route element={<SoloStaff roles={['eventos', 'deportes', 'administracion']} />}>
                     <Route path="noticias" element={<A.AdminNoticias />} />
