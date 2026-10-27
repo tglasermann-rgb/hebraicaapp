@@ -87,9 +87,12 @@ function SoloStaff({ roles = [] }: { roles?: Rol[] }) {
 /** Pantalla de entrada: tras iniciar sesión, cada rol va a su sección. */
 function Publica({ children }: { children: ReactNode }) {
   const { sesion, socio, cargando, esStaff } = useAuth()
+  const desde = (useLocation().state as { desde?: string } | null)?.desde
   if (cargando) return null
   if (!sesion) return <>{children}</>
   if (socio?.rol === 'seguridad') return <Navigate to="/admin/escaner" replace />
+  // Vuelve a la página que se pidió (p. ej. /admin); si no, staff al panel y socios al inicio
+  if (desde && desde !== '/' && (esStaff || !desde.startsWith('/admin'))) return <Navigate to={desde} replace />
   return <Navigate to={esStaff ? '/admin' : '/'} replace />
 }
 

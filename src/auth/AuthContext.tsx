@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
 import { api } from '@/lib/api'
 import type { Sesion } from '@/lib/backend'
 import { ROLES_STAFF, type Registro, type Rol, type Socio } from '@/lib/types'
@@ -23,11 +23,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [socio, setSocio] = useState<Socio | null>(null)
   const [registro, setRegistro] = useState<Registro | null>(null)
 
+  const usuarioActual = useRef<string | null | undefined>(undefined)
   const cargarSocio = useCallback(async (s: Sesion | null) => {
-    setSesion(s)
+    // Se carga todo antes de publicar la sesión, para que nadie decida adónde ir con datos a medias.
+    // Solo se muestra "cargando" si cambió el usuario (no en cada renovación automática del token).
+    if ((s?.userId ?? null) !== usuarioActual.current) setCargando(true)
+    usuarioActual.current = s?.userId ?? null
     const so = s ? await api.miSocio().catch(() => null) : null
+    const reg = s && !so ? await api.miRegistro().catch(() => null) : null
+    setSesion(s)
     setSocio(so)
-    setRegistro(s && !so ? await api.miRegistro().catch(() => null) : null)
+    setRegistro(reg)
     setCargando(false)
   }, [])
 
