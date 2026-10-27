@@ -161,6 +161,10 @@ export function crearSupabaseBackend(url: string, key: string): Backend {
       err(error)
       return (data as string | null) ?? null
     },
+    async cancelarCargo(cargoId) {
+      const { error } = await sb.rpc('cancelar_cargo', { p_cargo: cargoId })
+      err(error)
+    },
     async cancelarInscripcion(inscripcionId) {
       const { error } = await sb.rpc('cancelar_inscripcion', { p_inscripcion: inscripcionId })
       err(error)

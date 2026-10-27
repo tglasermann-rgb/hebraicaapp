@@ -73,6 +73,8 @@ export interface Backend {
   /** Devuelve el id del cargo a pagar; la inscripción se confirma al aprobarse ese pago (null si no tiene costo). */
   inscribir(actividadId: string, socioId: string): Promise<string | null>
   cancelarInscripcion(inscripcionId: string): Promise<void>
+  /** Cancela un cargo sin pagar de inscripción o de entradas (anula lo que generó). */
+  cancelarCargo(cargoId: string): Promise<void>
   comprarEntradas(eventoId: string, asistentes: string[]): Promise<void>
   revisarPago(pagoId: string, aprobado: boolean, nota: string): Promise<void>
   aprobarRegistro(registroId: string, accion: string, parentesco: string): Promise<void>

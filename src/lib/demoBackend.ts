@@ -346,6 +346,20 @@ export function crearDemoBackend(): Backend {
       guardar()
       return cargo
     },
+    async cancelarCargo(cargoId) {
+      await espera()
+      const c = db.cargos.find((x) => x.id === cargoId)
+      if (!c || c.accion !== yo().accion) throw new Error('No encontrado')
+      if (c.estado === 'pagado') throw new Error('Ya está pagado y no se puede cancelar')
+      if (db.pagos.some((p) => p.estado === 'pendiente' && p.cargo_ids?.includes(c.id))) throw new Error('Tienes un pago en revisión para este concepto; espera la respuesta de Administración')
+      const ins = db.inscripciones.filter((i) => i.cargo_id === c.id && i.estado !== 'cancelada')
+      const ent = db.entradas.filter((e) => e.cargo_id === c.id && e.estado === 'activa')
+      if (!ins.length && !ent.length) throw new Error('Este concepto no se puede cancelar desde el app; comunícate con Administración')
+      ins.forEach((i) => (i.estado = 'cancelada'))
+      ent.forEach((e) => (e.estado = 'anulada'))
+      db.cargos = db.cargos.filter((x) => x.id !== c.id)
+      guardar()
+    },
     async cancelarInscripcion(inscripcionId) {
       await espera()
       const i = db.inscripciones.find((x) => x.id === inscripcionId)
@@ -367,10 +381,11 @@ export function crearDemoBackend(): Backend {
       const mias = vendidas.filter((e) => e.accion === s.accion).length
       if (ev.max_por_accion != null && mias + asistentes.length > ev.max_por_accion) throw new Error(`Máximo ${ev.max_por_accion} entradas por acción`)
       const ahora = new Date().toISOString()
+      const cargo = ev.precio_usd > 0 ? id() : null
+      if (cargo)
+        db.cargos.push({ id: cargo, accion: s.accion!, concepto: `${asistentes.length} entrada(s): ${ev.titulo}`, monto_usd: ev.precio_usd * asistentes.length, fecha: hoy(), vence: null, tipo: 'evento', estado: 'pendiente', created_at: ahora })
       for (const n of asistentes)
-        db.entradas.push({ id: id(), evento_id: eventoId, socio_id: s.id, accion: s.accion!, nombre_asistente: n.trim(), codigo: id().replace(/-/g, '').slice(0, 24), estado: 'activa', created_at: ahora })
-      if (ev.precio_usd > 0)
-        db.cargos.push({ id: id(), accion: s.accion!, concepto: `${asistentes.length} entrada(s): ${ev.titulo}`, monto_usd: ev.precio_usd * asistentes.length, fecha: hoy(), vence: null, tipo: 'evento', estado: 'pendiente', created_at: ahora })
+        db.entradas.push({ id: id(), evento_id: eventoId, socio_id: s.id, accion: s.accion!, nombre_asistente: n.trim(), codigo: id().replace(/-/g, '').slice(0, 24), estado: 'activa', cargo_id: cargo, created_at: ahora })
       guardar()
     },
     async recuperarClave(usuario) {

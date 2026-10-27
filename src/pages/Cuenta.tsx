@@ -25,22 +25,20 @@ export default function Cuenta() {
   const nav = useNavigate()
   const aviso = useAviso()
   const { datos: c, cargando, recargar } = useDatos(() => estadoCuenta(socio!.accion!), [socio?.accion])
-  // Cargos de inscripciones aún sin pagar: se pueden cancelar desde aquí
-  const porPagar = useDatos(() => api.listar('inscripciones', { eq: { accion: socio!.accion!, estado: 'pendiente_pago' } }), [socio?.accion])
-  const inscripcionDe = new Map((porPagar.datos ?? []).map((i) => [i.cargo_id, i.id]))
-
-  async function cancelarInscripcion(cargoId: string) {
-    if (!confirm('¿Cancelar esta inscripción? Se borra el cargo y se libera el cupo.')) return
+  // Inscripciones y entradas sin pagar se pueden cancelar desde aquí (las cuotas no)
+  const cancelable = (x: Cargo) => x.concepto.startsWith('Inscripción: ') || / entrada\(s\): /.test(x.concepto)
+  async function cancelar(x: Cargo) {
+    const entradas = !x.concepto.startsWith('Inscripción: ')
+    if (!confirm(entradas ? '¿Cancelar estas entradas? Se anulan y se borra el cargo.' : '¿Cancelar esta inscripción? Se borra el cargo y se libera el cupo.')) return
     try {
-      await api.cancelarInscripcion(inscripcionDe.get(cargoId)!)
-      aviso('Inscripción cancelada')
+      await api.cancelarCargo(x.id)
+      aviso(entradas ? 'Entradas canceladas' : 'Inscripción cancelada')
       setSel((s) => {
         const n = new Set(s)
-        n.delete(cargoId)
+        n.delete(x.id)
         return n
       })
       recargar()
-      porPagar.recargar()
     } catch (e) {
       aviso((e as Error).message, 'error')
     }
@@ -75,9 +73,9 @@ export default function Cuenta() {
           {extra}
         </div>
       </button>
-      {onClick && inscripcionDe.has(x.id) && (
-        <button type="button" onClick={() => cancelarInscripcion(x.id)} className="-mt-2 mb-2.5 ml-[52px] text-sm font-medium text-red-400">
-          Cancelar inscripción
+      {onClick && cancelable(x) && (
+        <button type="button" onClick={() => cancelar(x)} className="-mt-2 mb-2.5 ml-[52px] text-sm font-medium text-red-400">
+          {x.concepto.startsWith('Inscripción: ') ? 'Cancelar inscripción' : 'Cancelar entradas'}
         </button>
       )}
     </div>

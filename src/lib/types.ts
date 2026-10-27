@@ -194,6 +194,7 @@ export interface Entrada {
   nombre_asistente: string
   codigo: string
   estado: 'activa' | 'usada' | 'anulada'
+  cargo_id: string | null
   created_at: string
 }
 
