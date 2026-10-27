@@ -412,7 +412,7 @@ create policy solicitudes_admin on public.solicitudes for update to authenticate
 create policy invitados_leer on public.invitados for select to authenticated
   using (accion = public.mi_accion() or public.tiene_rol(array['admin','seguridad']));
 create policy invitados_crear on public.invitados for insert to authenticated
-  with check (accion = public.mi_accion() and socio_id = (public.mi_socio()).id and estado = 'activo' and fecha >= current_date);
+  with check (accion = public.mi_accion() and socio_id = (public.mi_socio()).id and estado = 'activo' and fecha >= (now() at time zone 'America/Caracas')::date);
 create policy invitados_anular on public.invitados for update to authenticated
   using (accion = public.mi_accion() or public.tiene_rol(array['admin','seguridad']));
 

@@ -20,3 +20,8 @@ begin
   insert into public.tokens_carnet(token, socio_id, expira) values (v_token, p_socio, v_exp);
   return json_build_object('token', v_token, 'expira', v_exp);
 end $$;
+
+-- Pases de invitado: "hoy" según la hora de Caracas (antes usaba UTC y después de las 8 pm rechazaba el día actual)
+drop policy if exists invitados_crear on public.invitados;
+create policy invitados_crear on public.invitados for insert to authenticated
+  with check (accion = public.mi_accion() and socio_id = (public.mi_socio()).id and estado = 'activo' and fecha >= (now() at time zone 'America/Caracas')::date);
