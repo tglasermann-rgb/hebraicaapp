@@ -3,7 +3,8 @@ import { Check, CheckCircle2, FileText } from 'lucide-react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/auth/AuthContext'
-import { Boton, Cargando, Insignia, Lista, Pagina, Pestanas, Vacio } from '@/components/ui'
+import { Boton, Cargando, Insignia, Lista, Pagina, Pestanas, Vacio, useAviso } from '@/components/ui'
+import { api } from '@/lib/api'
 import { estadoCuenta } from '@/lib/cuenta'
 import { fBs, fFechaCorta, fUSD } from '@/lib/formato'
 import { useDatos } from '@/lib/useDatos'
@@ -22,7 +23,28 @@ export function Casilla({ marcada }: { marcada: boolean }) {
 export default function Cuenta() {
   const { socio } = useAuth()
   const nav = useNavigate()
-  const { datos: c, cargando } = useDatos(() => estadoCuenta(socio!.accion!), [socio?.accion])
+  const aviso = useAviso()
+  const { datos: c, cargando, recargar } = useDatos(() => estadoCuenta(socio!.accion!), [socio?.accion])
+  // Cargos de inscripciones aún sin pagar: se pueden cancelar desde aquí
+  const porPagar = useDatos(() => api.listar('inscripciones', { eq: { accion: socio!.accion!, estado: 'pendiente_pago' } }), [socio?.accion])
+  const inscripcionDe = new Map((porPagar.datos ?? []).map((i) => [i.cargo_id, i.id]))
+
+  async function cancelarInscripcion(cargoId: string) {
+    if (!confirm('¿Cancelar esta inscripción? Se borra el cargo y se libera el cupo.')) return
+    try {
+      await api.cancelarInscripcion(inscripcionDe.get(cargoId)!)
+      aviso('Inscripción cancelada')
+      setSel((s) => {
+        const n = new Set(s)
+        n.delete(cargoId)
+        return n
+      })
+      recargar()
+      porPagar.recargar()
+    } catch (e) {
+      aviso((e as Error).message, 'error')
+    }
+  }
   const [vista, setVista] = useState<'pagar' | 'historial'>('pagar')
   const [sel, setSel] = useState<Set<string>>(new Set())
 
@@ -41,17 +63,24 @@ export default function Cuenta() {
   const pagados = c.cargos.filter((x) => x.estado === 'pagado')
 
   const fila = (x: Cargo, extra: React.ReactNode, onClick?: () => void) => (
-    <button key={x.id} type="button" disabled={!onClick} onClick={onClick} className="flex w-full items-center gap-3 px-4 py-3.5 text-left active:bg-slate-50 disabled:active:bg-transparent">
-      {onClick && <Casilla marcada={sel.has(x.id)} />}
-      <div className="min-w-0 flex-1">
-        <p className="truncate font-semibold text-tinta">{x.concepto}</p>
-        <p className="text-sm text-slate-500">{fFechaCorta(x.fecha)}{x.vence && ` · vence ${fFechaCorta(x.vence)}`}</p>
-      </div>
-      <div className="text-right">
-        <p className="font-semibold tabular-nums text-tinta">{fUSD(Number(x.monto_usd))}</p>
-        {extra}
-      </div>
-    </button>
+    <div key={x.id}>
+      <button type="button" disabled={!onClick} onClick={onClick} className="flex w-full items-center gap-3 px-4 py-3.5 text-left active:bg-slate-50 disabled:active:bg-transparent">
+        {onClick && <Casilla marcada={sel.has(x.id)} />}
+        <div className="min-w-0 flex-1">
+          <p className="truncate font-semibold text-tinta">{x.concepto}</p>
+          <p className="text-sm text-slate-500">{fFechaCorta(x.fecha)}{x.vence && ` · vence ${fFechaCorta(x.vence)}`}</p>
+        </div>
+        <div className="text-right">
+          <p className="font-semibold tabular-nums text-tinta">{fUSD(Number(x.monto_usd))}</p>
+          {extra}
+        </div>
+      </button>
+      {onClick && inscripcionDe.has(x.id) && (
+        <button type="button" onClick={() => cancelarInscripcion(x.id)} className="-mt-2 mb-2.5 ml-[52px] text-sm font-medium text-red-400">
+          Cancelar inscripción
+        </button>
+      )}
+    </div>
   )
 
   return (
