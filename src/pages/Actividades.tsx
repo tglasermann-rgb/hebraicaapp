@@ -1,6 +1,6 @@
-import { Clock, Flame, MapPin, Trophy, User, Users } from 'lucide-react'
+import { Clock, Clock3, Flame, MapPin, Trophy, User, Users } from 'lucide-react'
 import { useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '@/auth/AuthContext'
 import { Boton, Cargando, Insignia, MensajeError, Pagina, Portada, Selector, Tarjeta, Vacio, useAviso } from '@/components/ui'
 import { api } from '@/lib/api'
@@ -78,7 +78,9 @@ export function DetalleActividad() {
   const aviso = useAviso()
   const act = useDatos(() => api.obtener('actividades', id!), [id])
   const familia = useDatos(() => api.listar('socios', { eq: { accion: socio!.accion! } }), [socio?.accion])
-  const insc = useDatos(() => api.listar('inscripciones', { eq: { actividad_id: id!, accion: socio!.accion!, estado: 'activa' } }), [id])
+  const navigate = useNavigate()
+  const insc = useDatos(() => api.listar('inscripciones', { eq: { actividad_id: id!, accion: socio!.accion! }, in: { estado: ['activa', 'pendiente_pago'] } }), [id])
+  const enRevision = useDatos(() => api.listar('pagos', { eq: { accion: socio!.accion!, estado: 'pendiente' } }), [socio?.accion])
   const [quien, setQuien] = useState('')
   const [error, setError] = useState('')
   const [enviando, setEnviando] = useState(false)
@@ -87,10 +89,14 @@ export function DetalleActividad() {
   const a = act.datos
   if (!a) return <Pagina titulo="Actividad" atras><Vacio titulo="No encontrada" /></Pagina>
   const d = depto(a.departamento)
-  const inscritos = new Set((insc.datos ?? []).map((i) => i.socio_id))
+  const inscritos = new Set((insc.datos ?? []).filter((i) => i.estado === 'activa').map((i) => i.socio_id))
+  const porPagar = (insc.datos ?? []).filter((i) => i.estado === 'pendiente_pago')
+  const ocupados = new Set((insc.datos ?? []).map((i) => i.socio_id))
+  const nombre = (sid: string) => (familia.datos ?? []).find((f) => f.id === sid)?.nombre ?? ''
+  const pagar = (cargo: string | null) => navigate(`/cuenta/reportar?cargos=${cargo}`)
   const elegibles = (familia.datos ?? []).filter((f) => {
     const e = edad(f.fecha_nacimiento)
-    return !inscritos.has(f.id) && (e == null || ((a.edad_min == null || e >= a.edad_min) && (a.edad_max == null || e <= a.edad_max)))
+    return !ocupados.has(f.id) && (e == null || ((a.edad_min == null || e >= a.edad_min) && (a.edad_max == null || e <= a.edad_max)))
   })
   const seleccionado = quien || elegibles[0]?.id || ''
 
@@ -98,7 +104,9 @@ export function DetalleActividad() {
     setError('')
     setEnviando(true)
     try {
-      await api.inscribir(a!.id, seleccionado)
+      const cargo = await api.inscribir(a!.id, seleccionado)
+      // Con costo: se paga de una vez; la inscripción se confirma al aprobarse el pago
+      if (cargo) return pagar(cargo)
       aviso('¡Inscripción realizada!')
       insc.recargar()
       setQuien('')
@@ -133,6 +141,37 @@ export function DetalleActividad() {
           </Tarjeta>
         )}
 
+        {porPagar.map((i) => {
+          const revisando = (enRevision.datos ?? []).some((p) => p.cargo_ids?.includes(i.cargo_id!))
+          return (
+            <Tarjeta key={i.id} className="mt-4 bg-amber-50 p-4 shadow-none">
+              <p className="flex items-center gap-2 font-semibold text-amber-800"><Clock3 className="h-4 w-4" />{nombre(i.socio_id)}: {revisando ? 'pago en revisión' : 'falta pagar'}</p>
+              <p className="mt-1 text-sm text-amber-700">
+                {revisando ? 'Quedará inscrito apenas Administración apruebe el pago.' : 'Su cupo está apartado por 48 horas. Si no pagas, se libera.'}
+              </p>
+              {!revisando && (
+                <div className="mt-3 flex items-center gap-3">
+                  <Boton className="flex-1" onClick={() => pagar(i.cargo_id)}>Pagar {fUSD(a.precio_usd)}</Boton>
+                  <button
+                    className="px-2 text-sm font-medium text-slate-500"
+                    onClick={async () => {
+                      try {
+                        await api.cancelarInscripcion(i.id)
+                        aviso('Inscripción cancelada')
+                        insc.recargar()
+                      } catch (e) {
+                        setError((e as Error).message)
+                      }
+                    }}
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              )}
+            </Tarjeta>
+          )
+        })}
+
         {a.inscripciones_abiertas ? (
           <Tarjeta className="mt-4 p-4">
             <h3 className="font-display text-lg font-extrabold text-tinta">Inscribir</h3>
@@ -144,8 +183,8 @@ export function DetalleActividad() {
                   {elegibles.map((f) => <option key={f.id} value={f.id}>{f.nombre} {f.apellido}{edad(f.fecha_nacimiento) != null && ` (${edad(f.fecha_nacimiento)} años)`}</option>)}
                 </Selector>
                 {error && <div className="mt-3"><MensajeError texto={error} /></div>}
-                <Boton bloque className="mt-3" cargando={enviando} onClick={inscribir}>Inscribir{a.precio_usd > 0 && ` · ${fUSD(a.precio_usd)}`}</Boton>
-                <p className="mt-2 text-center text-xs text-slate-500">{a.precio_usd > 0 ? 'El monto se carga al estado de cuenta de tu acción.' : a.nota_precio === 'Sin costo' ? 'Actividad sin costo.' : 'Atención al Público confirmará tu inscripción y el costo, que se cargará a tu cuenta.'}</p>
+                <Boton bloque className="mt-3" cargando={enviando} onClick={inscribir}>{a.precio_usd > 0 ? `Inscribir y pagar · ${fUSD(a.precio_usd)}` : 'Inscribir'}</Boton>
+                <p className="mt-2 text-center text-xs text-slate-500">{a.precio_usd > 0 ? 'Quedas inscrito cuando se apruebe tu pago.' : a.nota_precio === 'Sin costo' ? 'Actividad sin costo.' : 'Atención al Público confirmará tu inscripción y el costo, que se cargará a tu cuenta.'}</p>
               </>
             )}
           </Tarjeta>

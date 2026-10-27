@@ -458,7 +458,7 @@ function Inscritos({ actividadId }: { actividadId: string }) {
   const [abierto, setAbierto] = useState(false)
   const { datos } = useDatos(async () => {
     if (!abierto) return []
-    const ins = await api.listar('inscripciones', { eq: { actividad_id: actividadId, estado: 'activa' } })
+    const ins = await api.listar('inscripciones', { eq: { actividad_id: actividadId }, in: { estado: ['activa', 'pendiente_pago'] } })
     const soc = ins.length ? await api.listar('socios', { in: { id: ins.map((i) => i.socio_id) } }) : []
     return ins.map((i) => ({ ...i, socio: soc.find((s) => s.id === i.socio_id) }))
   }, [abierto, actividadId])
@@ -467,7 +467,10 @@ function Inscritos({ actividadId }: { actividadId: string }) {
       <button onClick={() => setAbierto(true)} className="text-sm font-medium text-azul">Inscritos</button>
       <Hoja abierta={abierto} onCerrar={() => setAbierto(false)} titulo="Inscritos">
         {(datos ?? []).map((i) => (
-          <p key={i.id} className="border-b border-slate-100 py-2 text-sm">{i.socio?.nombre} {i.socio?.apellido} · Acción {i.accion}</p>
+          <p key={i.id} className="border-b border-slate-100 py-2 text-sm">
+            {i.socio?.nombre} {i.socio?.apellido} · Acción {i.accion}
+            {i.estado === 'pendiente_pago' && <span className="ml-2 text-xs font-medium text-amber-600">Pendiente de pago</span>}
+          </p>
         ))}
         {datos?.length === 0 && <p className="py-6 text-center text-slate-500">Sin inscritos</p>}
       </Hoja>

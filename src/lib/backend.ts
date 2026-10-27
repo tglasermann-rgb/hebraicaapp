@@ -70,7 +70,9 @@ export interface Backend {
   reservar(instalacionId: string, fecha: string, hora: string, socioId: string, jugadores?: string[]): Promise<void>
   /** Cancela respetando el límite de horas de la instalación. */
   cancelarReserva(reservaId: string): Promise<void>
-  inscribir(actividadId: string, socioId: string): Promise<void>
+  /** Devuelve el id del cargo a pagar; la inscripción se confirma al aprobarse ese pago (null si no tiene costo). */
+  inscribir(actividadId: string, socioId: string): Promise<string | null>
+  cancelarInscripcion(inscripcionId: string): Promise<void>
   comprarEntradas(eventoId: string, asistentes: string[]): Promise<void>
   revisarPago(pagoId: string, aprobado: boolean, nota: string): Promise<void>
   aprobarRegistro(registroId: string, accion: string, parentesco: string): Promise<void>

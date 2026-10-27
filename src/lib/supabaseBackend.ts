@@ -157,7 +157,12 @@ export function crearSupabaseBackend(url: string, key: string): Backend {
       err(error)
     },
     async inscribir(actividadId, socioId) {
-      const { error } = await sb.rpc('inscribir', { p_actividad: actividadId, p_socio: socioId })
+      const { data, error } = await sb.rpc('inscribir', { p_actividad: actividadId, p_socio: socioId })
+      err(error)
+      return (data as string | null) ?? null
+    },
+    async cancelarInscripcion(inscripcionId) {
+      const { error } = await sb.rpc('cancelar_inscripcion', { p_inscripcion: inscripcionId })
       err(error)
     },
     async comprarEntradas(eventoId, asistentes) {

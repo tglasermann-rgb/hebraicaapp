@@ -70,7 +70,7 @@ export function semilla(): DB {
   const idAct = (nombre: string) => actividades.find((a) => a.nombre === nombre)!.id
 
   const inscripciones: Tablas['inscripciones'][] = [
-    { ...base, id: 'ins1', actividad_id: idAct('Tenis de Campo · Pelota Amarilla'), socio_id: 's3', accion: '1234', estado: 'activa' },
+    { ...base, id: 'ins1', actividad_id: idAct('Tenis de Campo · Pelota Amarilla'), socio_id: 's3', accion: '1234', estado: 'activa', cargo_id: null },
   ]
 
   // Calendario real 2026-2027 (eventos de día completo)

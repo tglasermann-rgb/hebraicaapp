@@ -161,7 +161,9 @@ export interface Inscripcion {
   actividad_id: string
   socio_id: string
   accion: string
-  estado: 'activa' | 'cancelada'
+  /** pendiente_pago: aparta el cupo hasta que se apruebe el pago de su cargo */
+  estado: 'activa' | 'pendiente_pago' | 'cancelada'
+  cargo_id: string | null
   created_at: string
 }
 

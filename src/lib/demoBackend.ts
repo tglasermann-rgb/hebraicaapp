@@ -104,6 +104,27 @@ export function crearDemoBackend(): Backend {
   }
   generarRecordatorios()
 
+  // Inscripciones sin pagar: se liberan a las 48 h si no hay un pago en revisión o aprobado (en producción, pg_cron)
+  const liberarInscripciones = () => {
+    const limite = Date.now() - 48 * 3600e3
+    for (const i of db.inscripciones) {
+      if (i.estado !== 'pendiente_pago' || new Date(i.created_at).getTime() > limite) continue
+      if (db.pagos.some((p) => p.estado !== 'rechazado' && p.cargo_ids?.includes(i.cargo_id!))) continue
+      i.estado = 'cancelada'
+      db.cargos = db.cargos.filter((c) => !(c.id === i.cargo_id && c.estado === 'pendiente'))
+    }
+  }
+  // Cargo pagado → inscripción confirmada (en producción, el trigger confirmar_inscripcion)
+  const confirmarInscripciones = () => {
+    for (const i of db.inscripciones.filter((x) => x.estado === 'pendiente_pago')) {
+      if (db.cargos.find((c) => c.id === i.cargo_id)?.estado !== 'pagado') continue
+      i.estado = 'activa'
+      const so = db.socios.find((x) => x.id === i.socio_id)
+      const a = db.actividades.find((x) => x.id === i.actividad_id)
+      db.notificaciones.unshift({ id: id(), titulo: '¡Inscripción confirmada!', cuerpo: `${so?.nombre} quedó inscrito en ${a?.nombre}.`, destino: 'socio', accion: null, socio_id: i.socio_id, enlace: `/actividades/${i.actividad_id}`, created_at: new Date().toISOString() })
+    }
+  }
+
   const backend: Backend = {
     modo: 'demo',
 
@@ -197,6 +218,7 @@ export function crearDemoBackend(): Backend {
       const antes = { ...fila }
       Object.assign(fila, datos)
       auditar(t, 'UPDATE', antes, fila)
+      if (t === 'cargos') confirmarInscripciones()
       guardar()
       return fila
     },
@@ -306,13 +328,30 @@ export function crearDemoBackend(): Backend {
       const act = db.actividades.find((x) => x.id === actividadId)!
       const p = db.socios.find((x) => x.id === socioId)!
       if (!act.inscripciones_abiertas) throw new Error('Inscripciones cerradas')
-      const activas = db.inscripciones.filter((x) => x.actividad_id === actividadId && x.estado === 'activa')
-      if (act.cupo != null && activas.length >= act.cupo) throw new Error('No quedan cupos disponibles')
-      if (activas.some((x) => x.socio_id === socioId)) throw new Error(`${p.nombre} ya está inscrito en esta actividad`)
+      liberarInscripciones()
+      const vigentes = db.inscripciones.filter((x) => x.actividad_id === actividadId && x.estado !== 'cancelada')
+      const mia = vigentes.find((x) => x.socio_id === socioId)
+      if (mia?.estado === 'activa') throw new Error(`${p.nombre} ya está inscrito en esta actividad`)
+      if (mia) return mia.cargo_id
+      if (act.cupo != null && vigentes.length >= act.cupo) throw new Error('No quedan cupos disponibles')
       const ahora = new Date().toISOString()
-      db.inscripciones.push({ id: id(), actividad_id: actividadId, socio_id: socioId, accion: s.accion!, estado: 'activa', created_at: ahora })
-      if (act.precio_usd > 0)
-        db.cargos.push({ id: id(), accion: s.accion!, concepto: `Inscripción: ${act.nombre} (${p.nombre})`, monto_usd: act.precio_usd, fecha: hoy(), vence: null, tipo: 'actividad', estado: 'pendiente', created_at: ahora })
+      let cargo: string | null = null
+      if (act.precio_usd > 0) {
+        cargo = id()
+        db.cargos.push({ id: cargo, accion: s.accion!, concepto: `Inscripción: ${act.nombre} (${p.nombre})`, monto_usd: act.precio_usd, fecha: hoy(), vence: format(new Date(Date.now() + 2 * 864e5), 'yyyy-MM-dd'), tipo: 'actividad', estado: 'pendiente', created_at: ahora })
+      }
+      db.inscripciones.push({ id: id(), actividad_id: actividadId, socio_id: socioId, accion: s.accion!, estado: cargo ? 'pendiente_pago' : 'activa', cargo_id: cargo, created_at: ahora })
+      guardar()
+      return cargo
+    },
+    async cancelarInscripcion(inscripcionId) {
+      await espera()
+      const i = db.inscripciones.find((x) => x.id === inscripcionId)
+      if (!i || i.accion !== yo().accion) throw new Error('No encontrada')
+      if (i.estado !== 'pendiente_pago') throw new Error('Para retirarte de una actividad pagada comunícate con el departamento')
+      if (db.pagos.some((p) => p.estado === 'pendiente' && p.cargo_ids?.includes(i.cargo_id!))) throw new Error('Tu pago está en revisión; espera la respuesta de Administración')
+      i.estado = 'cancelada'
+      db.cargos = db.cargos.filter((c) => !(c.id === i.cargo_id && c.estado === 'pendiente'))
       guardar()
     },
     async comprarEntradas(eventoId, asistentes) {
@@ -474,6 +513,7 @@ export function crearDemoBackend(): Backend {
       p.estado = aprobado ? 'aprobado' : 'rechazado'
       auditar('pagos', 'UPDATE', antesPago, p)
       if (aprobado) for (const c of db.cargos) if (p.cargo_ids?.includes(c.id) && c.accion === p.accion) c.estado = 'pagado'
+      confirmarInscripciones()
       p.nota_admin = nota || null
       db.notificaciones.unshift({
         id: id(), titulo: aprobado ? 'Pago aprobado' : 'Pago rechazado',

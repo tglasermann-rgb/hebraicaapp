@@ -12,7 +12,8 @@ import { Casilla } from './Cuenta'
 import { NOMBRE_METODO, type MetodoPago } from '@/lib/types'
 
 
-function Dato({ k, v }: { k: string; v: string }) {
+/** Un dato para copiar: etiqueta arriba, valor abajo y el botón de copiar a la derecha. */
+function Dato({ k, v, destacado }: { k: string; v: string; destacado?: boolean }) {
   const [ok, setOk] = useState(false)
   return (
     <button
@@ -22,11 +23,14 @@ function Dato({ k, v }: { k: string; v: string }) {
         setOk(true)
         setTimeout(() => setOk(false), 1500)
       }}
-      className="flex w-full items-center justify-between py-1.5 text-left"
+      className="flex w-full items-center gap-3 py-2 text-left"
     >
-      <span className="text-sm text-slate-500">{k}</span>
-      <span className="flex items-center gap-1.5 text-sm font-medium text-slate-900">
-        {v} {ok ? <Check className="h-4 w-4 text-emerald-600" /> : <Copy className="h-3.5 w-3.5 text-slate-400" />}
+      <span className="min-w-0 flex-1">
+        <span className="block text-xs text-slate-500">{k}</span>
+        <span className={destacado ? 'block font-mono text-[15px] font-semibold tracking-tight text-tinta' : 'block text-sm font-medium text-slate-800'}>{v}</span>
+      </span>
+      <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-full ${ok ? 'bg-emerald-50 text-emerald-600' : 'bg-elevada text-slate-500'}`}>
+        {ok ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
       </span>
     </button>
   )
@@ -55,6 +59,8 @@ export default function ReportarPago() {
   const metodos = [...new Set([...(db?.cuentas ?? []).map((c) => c.metodo), 'tarjeta' as MetodoPago, 'efectivo' as MetodoPago])]
   const metodo: MetodoPago = metodoElegido ?? metodos[0] ?? 'transferencia_bs'
   const cuentas = (db?.cuentas ?? []).filter((c) => c.metodo === metodo)
+  // Datos iguales en todas las cuentas (titular, RIF) se muestran una sola vez al final
+  const comunes = new Set(cuentas.length > 1 ? cuentas[0].datos.map((d) => d.k + d.v).filter((x) => cuentas.every((c) => c.datos.some((d) => d.k + d.v === x))) : [])
   const enBs = METODOS_BS.includes(metodo)
   const tasa = cuenta.datos?.tasa?.bs_por_usd ?? null
   const montoNum = Number(monto.replace(',', '.')) || 0
@@ -159,17 +165,22 @@ export default function ReportarPago() {
         </Selector>
 
         {db && (
-          <Tarjeta className="px-4 py-2">
-            <p className="pt-1 text-xs font-medium uppercase tracking-wide text-slate-400">Datos para pagar · toca para copiar</p>
+          <Tarjeta className="p-4">
+            <p className="text-xs font-medium uppercase tracking-wide text-slate-400">Datos para pagar · toca para copiar</p>
             {cuentas.map((c, n) => (
-              <div key={n} className={n > 0 ? 'mt-1 border-t border-slate-100 pt-1' : ''}>
-                {(cuentas.length > 1 || c.titulo !== NOMBRE_METODO[c.metodo]) && <p className="pt-1.5 text-sm font-semibold">{c.titulo}</p>}
-                {c.datos.map((d) => <Dato key={d.k} k={d.k} v={d.v} />)}
-                {c.nota && <p className="pb-1 text-xs font-medium text-amber-700">{c.nota}</p>}
+              <div key={n} className="mt-3 rounded-2xl bg-elevada/60 px-3.5 py-2">
+                {(cuentas.length > 1 || c.titulo !== NOMBRE_METODO[c.metodo]) && <p className="pt-1 text-sm font-semibold text-tinta">{c.titulo}</p>}
+                {c.datos.filter((d) => !comunes.has(d.k + d.v)).map((d, i) => <Dato key={d.k} k={d.k} v={d.v} destacado={i === 0} />)}
+                {c.nota && <p className="pb-1.5 text-xs font-medium text-amber-700">{c.nota}</p>}
               </div>
             ))}
-            {cuentas.length === 0 && <p className="py-2 text-sm text-slate-600">Paga en la caja de Atención al Público y reporta aquí el número del recibo.</p>}
-            {db.nota && <p className="border-t border-slate-100 py-2 text-xs text-slate-500">{db.nota}</p>}
+            {comunes.size > 0 && (
+              <div className="mt-3 divide-y divide-white/5 px-0.5">
+                {cuentas[0].datos.filter((d) => comunes.has(d.k + d.v)).map((d) => <Dato key={d.k} k={d.k} v={d.v} />)}
+              </div>
+            )}
+            {cuentas.length === 0 && <p className="mt-2 text-sm text-slate-600">Paga en la caja de Atención al Público y reporta aquí el número del recibo.</p>}
+            {db.nota && <p className="mt-3 text-xs leading-relaxed text-slate-500">{db.nota}</p>}
           </Tarjeta>
         )}
 

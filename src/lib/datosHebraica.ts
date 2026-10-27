@@ -353,7 +353,7 @@ export const DATOS_BANCARIOS: DatosBancarios = {
     { metodo: 'pipol', titulo: 'Pipol Pay', datos: [{ k: 'Correo', v: 'ingresos@hebraica.com.ve' }] },
     { metodo: 'efectivo', titulo: 'Dólares en efectivo', datos: [{ k: 'Dónde', v: 'Banco Nacional de Crédito o caja de Atención al Público' }] },
   ],
-  nota: 'Al pagar indica el número de cédula o de acción del titular y qué estás pagando. Los pagos en bolívares se calculan a la tasa oficial del BCV y se emiten a nombre de ' + TITULAR + ' (RIF ' + RIF + ').',
+  nota: 'En el concepto indica tu número de acción y qué estás pagando. Los pagos en bolívares se calculan a la tasa oficial del BCV.',
 }
 
 // ---------------------------------------------------------------------------
