@@ -110,7 +110,7 @@ export default function Carnet() {
           ) : token ? (
             <>
               {/* Reloj en vivo: Seguridad comprueba que corre y coincide con la hora real */}
-              <div className="mb-3 flex items-center gap-2 rounded-full bg-elevada px-3 py-1 text-white">
+              <div className="mb-3 flex items-center gap-2 rounded-full bg-noche px-3 py-1 text-white">
                 <span className="relative flex h-2 w-2">
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
                   <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />

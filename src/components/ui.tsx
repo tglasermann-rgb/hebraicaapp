@@ -106,7 +106,7 @@ export function Pagina({ titulo, atras, accion, children, sinPadding }: { titulo
 
 export function Tarjeta({ className, children, onClick }: { className?: string; children: ReactNode; onClick?: () => void }) {
   return (
-    <div onClick={onClick} className={clsx('relative rounded-3xl shadow-card ring-1 ring-white/[0.06]', !/(^|\s)bg-/.test(className ?? '') && 'bg-superficie', onClick && 'cursor-pointer active:scale-[.99]', className)}>
+    <div onClick={onClick} className={clsx('relative rounded-3xl shadow-card ring-1 ring-linea/[0.06]', !/(^|\s)bg-/.test(className ?? '') && 'bg-superficie', onClick && 'cursor-pointer active:scale-[.99]', className)}>
       {children}
     </div>
   )
@@ -289,7 +289,7 @@ export function AvisoProvider({ children }: { children: ReactNode }) {
       {children}
       {aviso && (
         <div key={aviso.k} className="pointer-events-none fixed inset-x-0 top-[max(1rem,env(safe-area-inset-top))] z-[60] flex justify-center px-4">
-          <div className={clsx('animar-entrada rounded-full px-5 py-3 text-sm font-semibold text-white shadow-flota backdrop-blur-xl', aviso.tipo === 'ok' ? 'bg-elevada/95' : 'bg-red-600/95')}>{aviso.texto}</div>
+          <div className={clsx('animar-entrada rounded-full px-5 py-3 text-sm font-semibold text-white shadow-flota backdrop-blur-xl', aviso.tipo === 'ok' ? 'bg-noche/95' : 'bg-red-600/95')}>{aviso.texto}</div>
         </div>
       )}
     </AvisoCtx.Provider>

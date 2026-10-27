@@ -43,7 +43,7 @@ export default function Registro() {
         </div>
         <Campo etiqueta="Número de cédula" inputMode="numeric" required value={d.cedula} onChange={fijar('cedula')} placeholder="Ej. 12345678" />
         <Campo etiqueta="Correo electrónico" type="email" autoComplete="email" autoCapitalize="none" required value={d.email} onChange={fijar('email')} ayuda="Lo usaremos para recuperar tu contraseña si la olvidas." />
-        <div className="border-t border-white/10 pt-4">
+        <div className="border-t border-linea/10 pt-4">
           <Campo etiqueta="Crea tu usuario" autoComplete="username" autoCapitalize="none" autoCorrect="off" spellCheck={false} required value={d.usuario} onChange={fijar('usuario')} placeholder="Ej. davidcohen" ayuda="Letras, números, punto o guion. Sin espacios." />
         </div>
         <Campo etiqueta="Contraseña" type="password" autoComplete="new-password" required value={d.clave} onChange={fijar('clave')} ayuda="Mínimo 8 caracteres" />

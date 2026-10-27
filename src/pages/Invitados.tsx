@@ -138,7 +138,7 @@ export default function Invitados() {
       </Hoja>
 
       <Hoja abierta={verAnteriores} onCerrar={() => setVerAnteriores(false)} titulo="Invitados anteriores">
-        <div className="divide-y divide-white/5">
+        <div className="divide-y divide-linea/5">
           {(anteriores.datos ?? []).map((i) => (
             <button
               key={i.id}

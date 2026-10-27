@@ -68,7 +68,7 @@ export default function EnRevision() {
       <span className="grid h-14 w-14 place-items-center rounded-2xl bg-amber-50 text-amber-700"><Clock3 className="h-7 w-7" /></span>
       <h1 className="mt-4 font-display text-[26px] font-extrabold">Tu solicitud está en revisión</h1>
       <p className="mt-2 text-slate-500">Administración verificará tus datos y aprobará tu acceso. Te avisaremos apenas esté lista; luego entras con tu usuario y contraseña.</p>
-      <div className="mt-5 divide-y divide-white/5 rounded-[22px] bg-superficie">
+      <div className="mt-5 divide-y divide-linea/5 rounded-[22px] bg-superficie">
         {[
           ['Nombre', `${registro.nombre} ${registro.apellido}`],
           ['Cédula', Number(registro.cedula).toLocaleString('es-VE')],

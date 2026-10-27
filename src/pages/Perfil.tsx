@@ -1,7 +1,8 @@
 import { Fingerprint, KeyRound, LogOut, RotateCcw } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/auth/AuthContext'
-import { Avatar, Boton, Campo, FilaEnlace, Hoja, Lista, MensajeError, Pagina, Seccion, Tarjeta, useAviso } from '@/components/ui'
+import { Avatar, Boton, Campo, FilaEnlace, Hoja, Lista, MensajeError, Pagina, Pestanas, Seccion, Tarjeta, useAviso } from '@/components/ui'
+import { fijarTema, temaGuardado, type Tema } from '@/lib/tema'
 import { api } from '@/lib/api'
 import { activarBiometria, biometriaActiva, biometriaDisponible, desactivarBiometria } from '@/lib/biometria'
 import { reiniciarDemo } from '@/lib/demoBackend'
@@ -12,6 +13,7 @@ export default function Perfil() {
   const aviso = useAviso()
   const [bioDisp, setBioDisp] = useState(false)
   const [bio, setBio] = useState(biometriaActiva())
+  const [tema, setTema] = useState<Tema>(temaGuardado())
   const [clave, setClave] = useState(false)
   const [nueva, setNueva] = useState('')
   const [error, setError] = useState('')
@@ -69,6 +71,16 @@ export default function Perfil() {
           {socio.fecha_nacimiento && <FilaEnlace titulo="Fecha de nacimiento" sub={fFechaCorta(socio.fecha_nacimiento)} />}
         </Lista>
         <p className="mt-2 text-xs text-slate-500">Para corregir tus datos envía una solicitud a Atención al Público.</p>
+      </Seccion>
+      <Seccion titulo="Apariencia">
+        <Pestanas
+          opciones={[{ id: 'oscuro', texto: 'Oscuro' }, { id: 'claro', texto: 'Claro' }, { id: 'auto', texto: 'Automático' }]}
+          valor={tema}
+          onChange={(t: Tema) => {
+            setTema(t)
+            fijarTema(t)
+          }}
+        />
       </Seccion>
       <Seccion titulo="Seguridad">
         <Lista>

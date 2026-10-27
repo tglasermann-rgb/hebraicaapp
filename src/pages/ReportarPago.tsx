@@ -175,7 +175,7 @@ export default function ReportarPago() {
               </div>
             ))}
             {comunes.size > 0 && (
-              <div className="mt-3 divide-y divide-white/5 px-0.5">
+              <div className="mt-3 divide-y divide-linea/5 px-0.5">
                 {cuentas[0].datos.filter((d) => comunes.has(d.k + d.v)).map((d) => <Dato key={d.k} k={d.k} v={d.v} />)}
               </div>
             )}

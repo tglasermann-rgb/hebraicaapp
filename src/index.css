@@ -2,9 +2,84 @@
 @tailwind components;
 @tailwind utilities;
 
-html {
+/* Colores del tema (canales RGB para que funcionen las opacidades de Tailwind: bg-fondo/80) */
+:root {
+  --c-fondo: 11 12 16;
+  --c-superficie: 21 23 30;
+  --c-elevada: 31 34 43;
+  --c-tinta: 243 245 250;
+  --c-linea: 255 255 255;
+  --c-azul-50: 22 28 54;
+  --c-azul-100: 29 37 71;
+  --c-azul-200: 43 55 104;
+  --c-llama-50: 46 24 16;
+  --c-slate-50: 26 29 37;
+  --c-slate-100: 32 35 44;
+  --c-slate-200: 42 46 57;
+  --c-slate-300: 58 63 76;
+  --c-slate-400: 107 113 128;
+  --c-slate-500: 140 147 163;
+  --c-slate-600: 166 173 187;
+  --c-slate-700: 196 201 212;
+  --c-slate-800: 221 225 232;
+  --c-slate-900: 238 240 244;
+  --c-emerald-50: 15 42 34;
+  --c-emerald-400: 52 211 153;
+  --c-emerald-600: 52 211 153;
+  --c-emerald-700: 110 231 183;
+  --c-emerald-800: 167 243 208;
+  --c-emerald-900: 209 250 229;
+  --c-red-50: 45 21 23;
+  --c-red-100: 58 26 29;
+  --c-red-200: 90 35 40;
+  --c-red-600: 248 113 113;
+  --c-red-700: 252 165 165;
+  --c-amber-50: 43 34 16;
+  --c-amber-200: 252 211 77;
+  --c-amber-700: 252 211 77;
+  --sombra-flota: 0 20px 50px -12px rgba(0,0,0,.8);
   color-scheme: dark;
-  background: #0B0C10;
+}
+:root[data-tema='claro'] {
+  --c-fondo: 244 245 248;
+  --c-superficie: 255 255 255;
+  --c-elevada: 236 238 243;
+  --c-tinta: 15 18 34;
+  --c-linea: 0 0 0;
+  --c-azul-50: 238 241 253;
+  --c-azul-100: 223 229 251;
+  --c-azul-200: 195 205 246;
+  --c-llama-50: 254 237 231;
+  --c-slate-50: 247 248 250;
+  --c-slate-100: 238 240 244;
+  --c-slate-200: 226 229 235;
+  --c-slate-300: 203 208 217;
+  --c-slate-400: 149 156 171;
+  --c-slate-500: 107 114 130;
+  --c-slate-600: 75 82 99;
+  --c-slate-700: 54 60 75;
+  --c-slate-800: 34 39 53;
+  --c-slate-900: 20 24 36;
+  --c-emerald-50: 232 247 240;
+  --c-emerald-400: 16 185 129;
+  --c-emerald-600: 5 150 105;
+  --c-emerald-700: 4 120 87;
+  --c-emerald-800: 6 95 70;
+  --c-emerald-900: 6 78 59;
+  --c-red-50: 253 236 236;
+  --c-red-100: 251 218 218;
+  --c-red-200: 245 181 181;
+  --c-red-600: 220 38 38;
+  --c-red-700: 185 28 28;
+  --c-amber-50: 253 245 225;
+  --c-amber-200: 180 83 9;
+  --c-amber-700: 146 64 14;
+  --sombra-flota: 0 12px 32px -12px rgba(15,18,34,.18);
+  color-scheme: light;
+}
+
+html {
+  background: rgb(var(--c-fondo));
   -webkit-tap-highlight-color: transparent;
   -webkit-text-size-adjust: 100%;
 }
@@ -27,3 +102,8 @@ h1, h2, h3, .font-display { letter-spacing: -0.02em; }
 
 @keyframes entrar { from { opacity: 0; transform: translateY(8px) } to { opacity: 1; transform: none } }
 .animar-entrada { animation: entrar .35s cubic-bezier(.2,.8,.2,1) both; }
+
+/* Logos: versión blanca en oscuro, versión a color en claro */
+.solo-claro { display: none; }
+:root[data-tema='claro'] .solo-claro { display: revert; }
+:root[data-tema='claro'] .solo-oscuro { display: none; }

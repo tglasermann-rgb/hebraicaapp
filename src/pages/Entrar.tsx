@@ -12,7 +12,7 @@ export function MarcoAcceso({ children }: { children: React.ReactNode }) {
         <img src="./brand/logo-white.png" alt="Hebraica" className="relative h-28" />
         <p className="relative mt-4 text-center text-[13px] font-medium tracking-wide text-white/85">{CLUB.lema}</p>
       </div>
-      <div className="animar-entrada relative -mt-8 flex-1 rounded-t-[36px] border-t border-white/10 bg-fondo px-6 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] pt-8">{children}</div>
+      <div className="animar-entrada relative -mt-8 flex-1 rounded-t-[36px] border-t border-linea/10 bg-fondo px-6 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] pt-8">{children}</div>
     </div>
   )
 }

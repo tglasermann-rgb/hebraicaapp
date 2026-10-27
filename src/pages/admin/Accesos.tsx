@@ -35,7 +35,7 @@ export default function SolicitudesAcceso() {
         <Tarjeta className="mb-4 p-4">
           <p className="flex items-center gap-2 font-semibold text-tinta"><UserX className="h-4 w-4 text-amber-500" />Usuarios sin solicitud</p>
           <p className="mt-1 text-sm text-slate-500">Se crearon pero su solicitud no llegó (un registro quedó a medias). Bórralos para que la persona se registre de nuevo con ese usuario.</p>
-          <div className="mt-2 divide-y divide-white/5">
+          <div className="mt-2 divide-y divide-linea/5">
             {incompletas.datos.map((c) => (
               <div key={c.user_id} className="flex items-center justify-between py-2">
                 <span className="text-sm"><b>{c.usuario}</b>{c.creada && <span className="text-slate-500"> · {fHace(c.creada)}</span>}</span>

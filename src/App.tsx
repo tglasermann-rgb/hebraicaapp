@@ -60,7 +60,8 @@ function Bloqueo({ children }: { children: ReactNode }) {
   if (!bloqueado) return <>{children}</>
   return (
     <Pantalla>
-      <img src="./brand/logo-white.png" alt="Hebraica" className="mx-auto h-32" />
+      <img src="./brand/logo-white.png" alt="Hebraica" className="solo-oscuro mx-auto h-32" />
+      <img src="./brand/logo-color.png" alt="Hebraica" className="solo-claro mx-auto h-32" />
       <Boton variante="secundario" className="mt-10" onClick={intentar}><Fingerprint className="h-5 w-5" /> Desbloquear</Boton>
     </Pantalla>
   )
@@ -69,7 +70,7 @@ function Bloqueo({ children }: { children: ReactNode }) {
 function Protegida() {
   const { cargando, sesion, socio } = useAuth()
   const loc = useLocation()
-  if (cargando) return <Pantalla><img src="./brand/logo-white.png" alt="Hebraica" className="mx-auto h-32 animate-pulse" /></Pantalla>
+  if (cargando) return <Pantalla><img src="./brand/logo-white.png" alt="Hebraica" className="solo-oscuro mx-auto h-32 animate-pulse" /><img src="./brand/logo-color.png" alt="Hebraica" className="solo-claro mx-auto h-32 animate-pulse" /></Pantalla>
   if (!sesion) return <Navigate to="/entrar" replace state={{ desde: loc.pathname }} />
   // Seguridad solo usa el escáner: no ve la parte de socios
   if (socio?.rol === 'seguridad' && !loc.pathname.startsWith('/admin')) return <Navigate to="/admin/escaner" replace />

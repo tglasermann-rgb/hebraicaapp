@@ -41,7 +41,8 @@ export default function Inicio() {
     <div className="px-4 pt-[calc(env(safe-area-inset-top)+12px)]">
       {/* Barra superior */}
       <div className="flex items-center justify-between">
-        <img src="./brand/wordmark-white.png" alt="Hebraica" className="h-[20px] opacity-90" />
+        <img src="./brand/wordmark-white.png" alt="Hebraica" className="solo-oscuro h-[20px] opacity-90" />
+        <img src="./brand/wordmark-blue.png" alt="Hebraica" className="solo-claro h-[20px]" />
         <div className="flex items-center gap-2">
           <Link to="/notificaciones" aria-label="Notificaciones" className="relative grid h-10 w-10 place-items-center rounded-full bg-elevada">
             <Bell className="h-[19px] w-[19px]" />

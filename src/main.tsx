@@ -5,6 +5,9 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { registerSW } from 'virtual:pwa-register'
 import App from './App'
+import { iniciarTema } from './lib/tema'
+
+iniciarTema()
 
 // Actualizaciones: al publicar una versión nueva el app la descarga y se recarga sola.
 // Se revisa al abrirla, al volver a ella y cada 15 minutos.
