@@ -3,7 +3,7 @@
 -- Ejecutar en: Supabase > SQL Editor (o `supabase db push`).
 -- ============================================================================
 
-create extension if not exists pgcrypto;
+-- Los códigos aleatorios usan gen_random_uuid(), incluida en PostgreSQL (no requiere extensiones).
 
 -- ---------------------------------------------------------------------------
 -- Tablas
@@ -159,7 +159,7 @@ create table public.entradas (
   socio_id uuid not null references public.socios(id),
   accion text not null,
   nombre_asistente text not null,
-  codigo text not null unique default encode(gen_random_bytes(12), 'hex'),
+  codigo text not null unique default replace(gen_random_uuid()::text, '-', ''),
   estado text not null default 'activa' check (estado in ('activa','usada','anulada')),
   created_at timestamptz not null default now()
 );
@@ -236,7 +236,7 @@ create table public.invitados (
   nombre text not null,
   cedula text not null,
   fecha date not null,
-  codigo text not null unique default encode(gen_random_bytes(12), 'hex'),
+  codigo text not null unique default replace(gen_random_uuid()::text, '-', ''),
   estado text not null default 'activo' check (estado in ('activo','usado','anulado')),
   created_at timestamptz not null default now()
 );
@@ -473,7 +473,7 @@ begin
   if v_yo.id is null then raise exception 'No autenticado'; end if;
   if p_socio <> v_yo.id then raise exception 'Solo puedes ver tu propio carnet'; end if;
   delete from public.tokens_carnet where expira < now() - interval '5 minutes';
-  v_token := encode(gen_random_bytes(16), 'hex');
+  v_token := replace(gen_random_uuid()::text, '-', '') || replace(gen_random_uuid()::text, '-', '');
   v_exp := now() + interval '30 seconds';
   insert into public.tokens_carnet(token, socio_id, expira) values (v_token, p_socio, v_exp);
   return json_build_object('token', v_token, 'expira', v_exp);
