@@ -1,4 +1,4 @@
-import { ArrowUpRight, Bell, ShieldCheck, CalendarCheck, Flame, MessageSquareText, Moon, Ticket, Trophy, UserPlus, Users, UtensilsCrossed } from 'lucide-react'
+import { ArrowUpRight, Bell, CheckCircle2, QrCode, ShieldCheck, CalendarCheck, Flame, MessageSquareText, Moon, Ticket, Trophy, UserPlus, Users, UtensilsCrossed } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '@/auth/AuthContext'
 import { Avatar, Portada, Seccion, Tarjeta } from '@/components/ui'
@@ -6,7 +6,7 @@ import { api } from '@/lib/api'
 import { depto } from '@/lib/brand'
 import { proximoShabat } from '@/lib/calendarioJudio'
 import { estadoCuenta } from '@/lib/cuenta'
-import { fBs, fDiaHora, fFecha, fHace, fHora, fUSD, hoyISO } from '@/lib/formato'
+import { capitalizar, fBs, fDiaHora, fFecha, fHace, fHora, fUSD, hoyISO } from '@/lib/formato'
 import { useNoLeidas } from '@/lib/notificaciones'
 import { useDatos } from '@/lib/useDatos'
 
@@ -33,76 +33,89 @@ export default function Inicio() {
   const saludo = hora < 12 ? 'Buenos días' : hora < 19 ? 'Buenas tardes' : 'Buenas noches'
   const c = cuenta.datos
 
+  const hoy = capitalizar(fFecha(new Date().toISOString(), "EEEE d 'de' MMMM"))
+
   return (
-    <div>
-      {/* Encabezado con malla de marca */}
-      <div className="malla relative overflow-hidden rounded-b-[36px] px-5 pb-6 pt-[calc(env(safe-area-inset-top)+14px)] text-white">
-        <img src="./brand/isotipo-white.png" alt="" className="pointer-events-none absolute -right-10 top-6 h-64 rotate-[-10deg] opacity-[.07]" />
-        <div className="relative flex items-center justify-between">
-          <img src="./brand/wordmark-white.png" alt="Hebraica" className="h-[22px]" />
-          <div className="flex items-center gap-2">
-            <Link to="/notificaciones" aria-label="Notificaciones" className="vidrio relative grid h-10 w-10 place-items-center rounded-full">
-              <Bell className="h-[19px] w-[19px]" />
-              {noLeidas > 0 && <span className="absolute -right-0.5 -top-0.5 grid h-[18px] min-w-[18px] place-items-center rounded-full bg-llama px-1 text-[10px] font-bold ring-2 ring-[#1B2556]">{noLeidas > 9 ? '9+' : noLeidas}</span>}
-            </Link>
-            <Link to="/perfil" aria-label="Perfil" className="rounded-full ring-2 ring-white/25">
-              <Avatar nombre={`${socio?.nombre} ${socio?.apellido}`} foto={socio?.foto_url} tam={38} />
-            </Link>
-          </div>
+    <div className="px-4 pt-[calc(env(safe-area-inset-top)+12px)]">
+      {/* Barra superior */}
+      <div className="flex items-center justify-between">
+        <img src="./brand/wordmark-white.png" alt="Hebraica" className="h-[20px] opacity-90" />
+        <div className="flex items-center gap-2">
+          <Link to="/notificaciones" aria-label="Notificaciones" className="relative grid h-10 w-10 place-items-center rounded-full bg-elevada">
+            <Bell className="h-[19px] w-[19px]" />
+            {noLeidas > 0 && <span className="absolute -right-0.5 -top-0.5 grid h-[18px] min-w-[18px] place-items-center rounded-full bg-llama px-1 text-[10px] font-bold text-white ring-2 ring-fondo">{noLeidas > 9 ? '9+' : noLeidas}</span>}
+          </Link>
+          <Link to="/perfil" aria-label="Perfil">
+            <Avatar nombre={`${socio?.nombre} ${socio?.apellido}`} foto={socio?.foto_url} tam={40} />
+          </Link>
         </div>
-
-        <div className="relative mt-7">
-          <p className="text-[15px] text-white/65">{saludo},</p>
-          <p className="font-display text-[32px] font-extrabold leading-tight">{socio?.nombre} 👋</p>
-        </div>
-
-        <Link to="/cuenta" className="vidrio relative mt-5 block rounded-[26px] p-5">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-[13px] font-medium text-white/60">Saldo · Acción {socio?.accion}</p>
-              {c ? (
-                <>
-                  <p className="mt-1 font-display text-[38px] font-extrabold leading-none tracking-tight">{c.saldo > 0 ? fUSD(c.saldo) : 'Al día ✓'}</p>
-                  {c.saldo > 0 && c.tasa && <p className="mt-2 text-[13px] text-white/60">{fBs(c.saldo * c.tasa.bs_por_usd)} · BCV {c.tasa.bs_por_usd}</p>}
-                </>
-              ) : (
-                <div className="mt-2 h-9 w-36 animate-pulse rounded-2xl bg-white/15" />
-              )}
-            </div>
-            <span className="grid h-11 w-11 place-items-center rounded-full bg-white text-tinta"><ArrowUpRight className="h-5 w-5" /></span>
-          </div>
-          {c && c.saldo > 0 && (
-            <div className="mt-4 flex gap-2">
-              <span className="flex-1 rounded-full bg-llama py-2.5 text-center text-sm font-semibold">Pagar ahora</span>
-              <span className="flex-1 rounded-full bg-white/15 py-2.5 text-center text-sm font-semibold">Ver detalle</span>
-            </div>
-          )}
-          {c && c.pendientePorAprobar > 0 && <p className="mt-3 text-xs font-medium text-amber-200">{fUSD(c.pendientePorAprobar)} en pagos por aprobar</p>}
-        </Link>
       </div>
 
-      <div className="animar-entrada px-4">
-        {esStaff && (
-          <Link to="/admin" className="mt-5 flex items-center gap-3 rounded-3xl bg-tinta p-4 text-white">
-            <span className="grid h-11 w-11 place-items-center rounded-2xl bg-white/10"><ShieldCheck className="h-5 w-5" /></span>
-            <span className="flex-1">
-              <span className="block font-semibold">Panel de administración</span>
-              <span className="block text-[13px] text-white/60">Estás viendo el app como socio</span>
-            </span>
-            <ArrowUpRight className="h-5 w-5 text-white/50" />
-          </Link>
-        )}
-        {/* Accesos rápidos */}
-        <div className="mt-5 grid grid-cols-4 gap-2.5">
-          {ACCESOS.map(({ a, icono: I, texto, color }) => (
-            <Link key={a} to={a} className="flex flex-col items-center gap-2 rounded-3xl bg-white py-3.5 shadow-card ring-1 ring-tinta/[0.03] active:scale-95">
-              <span className="grid h-11 w-11 place-items-center rounded-2xl" style={{ background: `${color}14`, color }}>
-                <I className="h-[22px] w-[22px]" strokeWidth={2.2} />
-              </span>
-              <span className="text-[11.5px] font-semibold leading-none text-slate-700">{texto}</span>
-            </Link>
-          ))}
+      <div className="mt-7">
+        <p className="text-[13px] font-medium text-slate-500">{hoy}</p>
+        <h1 className="font-display text-[34px] font-extrabold leading-tight">{saludo}, {socio?.nombre}</h1>
+      </div>
+
+      {/* Saldo */}
+      <div className="mt-5 rounded-[28px] bg-superficie p-5 shadow-card">
+        <div className="flex items-center justify-between">
+          <p className="text-[13px] font-medium text-slate-500">Por pagar · Acción {socio?.accion}</p>
+          {c && c.pendientePorAprobar > 0 && <span className="rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-700">{fUSD(c.pendientePorAprobar)} en revisión</span>}
         </div>
+        {c ? (
+          c.saldo > 0 ? (
+            <>
+              <p className="mt-2 font-display text-[44px] font-extrabold leading-none tracking-tight">{fUSD(c.saldo)}</p>
+              {c.tasa && <p className="mt-2 text-[13px] text-slate-500">{fBs(c.saldo * c.tasa.bs_por_usd)} · BCV {c.tasa.bs_por_usd}</p>}
+              <div className="mt-5 grid grid-cols-2 gap-2">
+                <Link to="/cuenta" className="rounded-full bg-llama py-3 text-center text-sm font-semibold text-white active:scale-[.98]">Pagar</Link>
+                <Link to="/cuenta" className="rounded-full bg-elevada py-3 text-center text-sm font-semibold active:scale-[.98]">Ver detalle</Link>
+              </div>
+            </>
+          ) : (
+            <p className="mt-2 flex items-center gap-2 font-display text-[32px] font-extrabold text-emerald-400"><CheckCircle2 className="h-8 w-8" /> Al día</p>
+          )
+        ) : (
+          <div className="mt-3 h-11 w-40 animate-pulse rounded-2xl bg-elevada" />
+        )}
+      </div>
+
+      {esStaff && (
+        <Link to="/admin" className="mt-3 flex items-center gap-3 rounded-[24px] bg-superficie p-4 shadow-card">
+          <span className="grid h-11 w-11 place-items-center rounded-2xl bg-azul-50 text-azul"><ShieldCheck className="h-5 w-5" /></span>
+          <span className="flex-1">
+            <span className="block font-semibold">Panel de administración</span>
+            <span className="block text-[13px] text-slate-500">Estás viendo el app como socio</span>
+          </span>
+          <ArrowUpRight className="h-5 w-5 text-slate-400" />
+        </Link>
+      )}
+
+      {/* Bento */}
+      <div className="mt-3 grid grid-cols-2 gap-3">
+        <Link to="/carnet" className="malla relative col-span-1 row-span-2 flex min-h-[188px] flex-col justify-between overflow-hidden rounded-[28px] p-4 text-white active:scale-[.98]">
+          <img src="./brand/isotipo-white.png" alt="" className="pointer-events-none absolute -bottom-6 -right-6 h-36 rotate-[-12deg] opacity-15" />
+          <span className="grid h-11 w-11 place-items-center rounded-2xl bg-white/15"><QrCode className="h-6 w-6" /></span>
+          <span className="relative">
+            <span className="block font-display text-[22px] font-extrabold leading-tight">Mi carnet</span>
+            <span className="block text-[13px] text-white/70">Toca para entrar al club</span>
+          </span>
+        </Link>
+        {[ACCESOS[0], ACCESOS[3]].map(({ a, icono: I, texto, color }) => (
+          <Link key={a} to={a} className="flex min-h-[88px] items-center gap-3 rounded-[24px] bg-superficie p-4 shadow-card active:scale-[.98]">
+            <span className="grid h-10 w-10 place-items-center rounded-2xl" style={{ background: `${color}26`, color }}><I className="h-5 w-5" strokeWidth={2.2} /></span>
+            <span className="font-semibold">{texto}</span>
+          </Link>
+        ))}
+      </div>
+      <div className="mt-3 grid grid-cols-3 gap-3">
+        {ACCESOS.filter((_, i) => i !== 0 && i !== 3).map(({ a, icono: I, texto, color }) => (
+          <Link key={a} to={a} className="flex flex-col items-start gap-3 rounded-[24px] bg-superficie p-3.5 shadow-card active:scale-[.97]">
+            <span className="grid h-10 w-10 place-items-center rounded-2xl" style={{ background: `${color}26`, color }}><I className="h-5 w-5" strokeWidth={2.2} /></span>
+            <span className="text-[13px] font-semibold leading-tight">{texto}</span>
+          </Link>
+        ))}
+      </div>
 
         {/* Shabat */}
         <Link to="/agenda?vista=judio" className="relative mt-4 flex items-center gap-4 overflow-hidden rounded-3xl bg-marino p-4 text-white shadow-card">
@@ -124,13 +137,13 @@ export default function Inicio() {
               <Link key={e.id} to={`/eventos/${e.id}`} className="w-[250px] shrink-0 snap-start active:scale-[.98]">
                 <Portada imagen={e.imagen_url} departamento={e.departamento} className="flex h-[300px] flex-col justify-between rounded-[28px] p-4 text-white shadow-card">
                   <div className="relative flex items-start justify-between">
-                    <span className="rounded-2xl bg-white px-3 py-2 text-center leading-none text-tinta shadow-sm">
+                    <span className="rounded-2xl bg-superficie px-3 py-2 text-center leading-none text-tinta shadow-sm">
                       <span className="block font-display text-xl font-extrabold">{fFecha(e.fecha_inicio, 'd')}</span>
                       <span className="block text-[10px] font-bold uppercase tracking-wide text-slate-500">{fFecha(e.fecha_inicio, 'MMM')}</span>
                     </span>
                     {e.venta_entradas && <span className="vidrio rounded-full px-3 py-1.5 text-[11px] font-semibold">🎟️ Entradas</span>}
                   </div>
-                  <div className="relative -mx-4 -mb-4 bg-tinta/75 px-4 pb-4 pt-3">
+                  <div className="relative -mx-4 -mb-4 bg-black/55 px-4 pb-4 pt-3">
                     <p className="text-[11px] font-semibold uppercase tracking-wider text-white/75">{depto(e.departamento).nombre}</p>
                     <p className="font-display text-[20px] font-bold leading-tight">{e.titulo}</p>
                     <p className="mt-1 text-[13px] text-white/80">{fDiaHora(e.fecha_inicio)}</p>
@@ -159,7 +172,6 @@ export default function Inicio() {
         </Seccion>
 
         {api.modo === 'demo' && <p className="mt-6 text-center text-xs font-medium text-slate-400">Modo demostración · datos de ejemplo</p>}
-      </div>
     </div>
   )
 }

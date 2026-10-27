@@ -41,7 +41,7 @@ export default function AdminLayout() {
 
   return (
     <div className="min-h-[100dvh] bg-fondo lg:flex">
-      <aside className="hidden w-64 shrink-0 border-r border-slate-200 bg-white lg:block">
+      <aside className="hidden w-64 shrink-0 border-r border-slate-200 bg-superficie lg:block">
         <div className="sticky top-0 h-[100dvh] overflow-y-auto">
           <div className="bg-azul px-5 py-4">
             <img src="./brand/wordmark-white.png" alt="Hebraica" className="h-6" />
@@ -64,7 +64,7 @@ export default function AdminLayout() {
         </div>
       </aside>
       <div className="mx-auto w-full max-w-4xl flex-1">
-        <header className="sticky top-0 z-20 flex min-h-[52px] items-center gap-2 border-b border-slate-200 bg-white/95 px-2 pt-[env(safe-area-inset-top)] backdrop-blur">
+        <header className="sticky top-0 z-20 flex min-h-[52px] items-center gap-2 border-b border-slate-200 bg-fondo/90 px-2 pt-[env(safe-area-inset-top)] backdrop-blur">
           {pathname !== '/admin' && (
             <Link to="/admin" aria-label="Volver" className="grid h-10 w-10 place-items-center rounded-full text-azul active:bg-azul-50 lg:hidden">
               <ArrowLeft className="h-5 w-5" />

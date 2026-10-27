@@ -98,7 +98,7 @@ export default function Carnet() {
           <div><p className="text-[11px] font-semibold uppercase tracking-wider text-white/60">Cédula</p><p className="font-display text-lg font-bold">{Number(socio.cedula).toLocaleString('es-VE')}</p></div>
         </div>
 
-        <div className="relative mt-5 flex flex-col items-center rounded-[26px] bg-white p-5 text-tinta">
+        <div className="relative mt-5 flex flex-col items-center rounded-[26px] bg-blanco p-5 text-[#0E1430]">
           {socio.estado !== 'activo' ? (
             <p className="rounded-2xl bg-red-50 px-4 py-3 text-center text-sm font-medium text-red-700">Carnet suspendido. Comunícate con Atención al Público.</p>
           ) : oculto ? (
@@ -110,7 +110,7 @@ export default function Carnet() {
           ) : token ? (
             <>
               {/* Reloj en vivo: Seguridad comprueba que corre y coincide con la hora real */}
-              <div className="mb-3 flex items-center gap-2 rounded-full bg-tinta px-3 py-1 text-white">
+              <div className="mb-3 flex items-center gap-2 rounded-full bg-elevada px-3 py-1 text-white">
                 <span className="relative flex h-2 w-2">
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
                   <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />

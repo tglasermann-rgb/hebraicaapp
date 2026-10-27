@@ -150,7 +150,7 @@ export default function ReportarPago() {
         <Campo etiqueta="Número de referencia" required value={referencia} onChange={(e) => setReferencia(e.target.value)} />
         <Campo etiqueta="Fecha del pago" type="date" required max={hoyISO()} value={fecha} onChange={(e) => setFecha(e.target.value)} />
 
-        <label className="flex cursor-pointer items-center gap-3 rounded-2xl border-2 border-dashed border-slate-200 bg-white px-4 py-4">
+        <label className="flex cursor-pointer items-center gap-3 rounded-2xl border-2 border-dashed border-slate-200 bg-superficie px-4 py-4">
           <Upload className="h-5 w-5 text-azul" />
           <span className="flex-1 text-sm text-slate-600">{archivo ? archivo.name : 'Adjuntar comprobante (opcional)'}</span>
           <input type="file" accept="image/*,application/pdf" className="hidden" onChange={(e) => setArchivo(e.target.files?.[0] ?? null)} />

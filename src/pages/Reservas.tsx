@@ -111,7 +111,7 @@ export function Reservar() {
           const k = format(d, 'yyyy-MM-dd')
           const sel = k === fecha
           return (
-            <button key={k} onClick={() => setFecha(k)} className={`flex w-14 shrink-0 flex-col items-center rounded-2xl py-2 ${sel ? 'bg-azul text-white' : 'bg-white text-slate-700 shadow-card'}`}>
+            <button key={k} onClick={() => setFecha(k)} className={`flex w-14 shrink-0 flex-col items-center rounded-2xl py-2 ${sel ? 'bg-azul text-white' : 'bg-superficie text-slate-700 shadow-card'}`}>
               <span className="text-xs uppercase">{format(d, 'EEE', { locale: es })}</span>
               <span className="text-lg font-semibold">{format(d, 'd')}</span>
             </button>
@@ -130,7 +130,7 @@ export function Reservar() {
             const off = ocupado || pasado
             return (
               <button key={h} disabled={off} onClick={() => setHora(h)}
-                className={`rounded-2xl py-3 text-sm font-medium ${off ? 'bg-slate-100 text-slate-400 line-through' : 'bg-white text-azul shadow-card active:bg-azul-50'}`}>
+                className={`rounded-2xl py-3 text-sm font-medium ${off ? 'bg-slate-100 text-slate-400 line-through' : 'bg-superficie text-azul shadow-card active:bg-azul-50'}`}>
                 {fHoraTexto(h)}
               </button>
             )

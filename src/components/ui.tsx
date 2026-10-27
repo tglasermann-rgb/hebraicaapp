@@ -45,7 +45,7 @@ export function Boton({
 }
 
 const campoBase =
-  'w-full rounded-2xl border border-transparent bg-slate-100/80 px-4 py-3.5 text-[16px] text-tinta outline-none transition placeholder:text-slate-400 focus:border-azul/30 focus:bg-white focus:ring-4 focus:ring-azul/10'
+  'w-full rounded-2xl border border-transparent bg-slate-100/80 px-4 py-3.5 text-[16px] text-tinta outline-none transition placeholder:text-slate-400 focus:border-azul/30 focus:bg-superficie focus:ring-4 focus:ring-azul/10'
 
 export function Campo({ etiqueta, ayuda, className, ...p }: InputHTMLAttributes<HTMLInputElement> & { etiqueta?: string; ayuda?: string }) {
   return (
@@ -89,7 +89,7 @@ export function Pagina({ titulo, atras, accion, children, sinPadding }: { titulo
         <div className="sticky top-0 z-20 bg-fondo/75 px-4 pb-3 pt-[calc(env(safe-area-inset-top)+10px)] backdrop-blur-xl">
           <div className="flex items-center gap-3">
             {atras && (
-              <button aria-label="Volver" onClick={() => (typeof atras === 'string' ? nav(atras) : nav(-1))} className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white text-tinta shadow-card active:scale-95">
+              <button aria-label="Volver" onClick={() => (typeof atras === 'string' ? nav(atras) : nav(-1))} className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-superficie text-tinta shadow-card active:scale-95">
                 <ChevronLeft className="h-5 w-5" />
               </button>
             )}
@@ -105,7 +105,7 @@ export function Pagina({ titulo, atras, accion, children, sinPadding }: { titulo
 
 export function Tarjeta({ className, children, onClick }: { className?: string; children: ReactNode; onClick?: () => void }) {
   return (
-    <div onClick={onClick} className={clsx('relative rounded-3xl shadow-card ring-1 ring-tinta/[0.03]', !/(^|\s)bg-/.test(className ?? '') && 'bg-white', onClick && 'cursor-pointer active:scale-[.99]', className)}>
+    <div onClick={onClick} className={clsx('relative rounded-3xl shadow-card ring-1 ring-white/[0.06]', !/(^|\s)bg-/.test(className ?? '') && 'bg-superficie', onClick && 'cursor-pointer active:scale-[.99]', className)}>
       {children}
     </div>
   )
@@ -195,7 +195,7 @@ export function Pestanas<T extends string>({ opciones, valor, onChange }: { opci
         <button
           key={o.id}
           onClick={() => onChange(o.id)}
-          className={clsx('flex-1 rounded-full px-3 py-2 text-sm font-semibold transition', valor === o.id ? 'bg-white text-tinta shadow-sm' : 'text-slate-500')}
+          className={clsx('flex-1 rounded-full px-3 py-2 text-sm font-semibold transition', valor === o.id ? 'bg-superficie text-tinta shadow-sm' : 'text-slate-500')}
         >
           {o.texto}
         </button>
@@ -254,9 +254,9 @@ export function Hoja({ abierta, onCerrar, titulo, children }: { abierta: boolean
   if (!abierta) return null
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center" role="dialog" aria-modal>
-      <div className="absolute inset-0 bg-tinta/40 backdrop-blur-sm" onClick={onCerrar} />
-      <div className="animar-entrada relative max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-[32px] bg-white pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:rounded-[32px]">
-        <div className="sticky top-0 z-10 bg-white/90 px-5 pb-3 pt-2 backdrop-blur">
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onCerrar} />
+      <div className="animar-entrada relative max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-[32px] bg-superficie pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:rounded-[32px]">
+        <div className="sticky top-0 z-10 bg-superficie/90 px-5 pb-3 pt-2 backdrop-blur">
           <div className="mx-auto mb-3 h-1.5 w-10 rounded-full bg-slate-200" />
           <div className="flex items-center justify-between">
           <h2 className="font-display text-xl font-extrabold text-tinta">{titulo}</h2>
@@ -286,7 +286,7 @@ export function AvisoProvider({ children }: { children: ReactNode }) {
       {children}
       {aviso && (
         <div key={aviso.k} className="pointer-events-none fixed inset-x-0 top-[max(1rem,env(safe-area-inset-top))] z-[60] flex justify-center px-4">
-          <div className={clsx('animar-entrada rounded-full px-5 py-3 text-sm font-semibold text-white shadow-flota backdrop-blur-xl', aviso.tipo === 'ok' ? 'bg-tinta/90' : 'bg-red-600/95')}>{aviso.texto}</div>
+          <div className={clsx('animar-entrada rounded-full px-5 py-3 text-sm font-semibold text-white shadow-flota backdrop-blur-xl', aviso.tipo === 'ok' ? 'bg-elevada/95' : 'bg-red-600/95')}>{aviso.texto}</div>
         </div>
       )}
     </AvisoCtx.Provider>

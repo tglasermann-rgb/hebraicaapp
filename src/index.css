@@ -3,6 +3,8 @@
 @tailwind utilities;
 
 html {
+  color-scheme: dark;
+  background: #0B0C10;
   -webkit-tap-highlight-color: transparent;
   -webkit-text-size-adjust: 100%;
 }
@@ -15,6 +17,9 @@ h1, h2, h3, .font-display { letter-spacing: -0.02em; }
 
 /* Fondo institucional: azul plano de la marca */
 .malla { background-color: #293E9B; }
+/* Foto con capa oscura uniforme (sin degradado) */
+.foto-oscura { position: relative; }
+.foto-oscura::before { content: ''; position: absolute; inset: 0; background: rgba(11, 12, 16, .55); }
 .vidrio { @apply border border-white/20 bg-white/10; }
 
 .overflow-x-auto { scrollbar-width: none; }

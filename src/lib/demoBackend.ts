@@ -1,5 +1,6 @@
 import { format } from 'date-fns'
 import type { Backend, Filtro, Sesion } from './backend'
+import { obtenerTasaOficial } from './bcv'
 import { semilla, type DB } from './demoSeed'
 import type { Tabla } from './types'
 
@@ -32,6 +33,13 @@ export function crearDemoBackend(): Backend {
       /* lleno o bloqueado: se mantiene en memoria */
     }
   }
+  // En demo se intenta usar la tasa BCV real del día (si hay internet); si no, queda la de ejemplo
+  obtenerTasaOficial()
+    .then((t) => {
+      db.tasas = [{ id: 'bcv-' + t.fecha, fecha: t.fecha, bs_por_usd: t.valor, created_at: new Date().toISOString() }, ...db.tasas.filter((x) => x.fecha !== t.fecha)]
+      guardar()
+    })
+    .catch(() => {})
   let sesion: Sesion | null = null
   try {
     sesion = JSON.parse(localStorage.getItem(CLAVE_SESION) ?? 'null')

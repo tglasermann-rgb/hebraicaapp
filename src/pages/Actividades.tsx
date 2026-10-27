@@ -40,9 +40,9 @@ export default function Actividades() {
   return (
     <Pagina titulo="Actividades y academias" atras>
       <div className="-mx-4 mb-4 flex gap-2 overflow-x-auto px-4 pb-1">
-        <button onClick={() => setFiltro(null)} className={`shrink-0 rounded-full px-3.5 py-1.5 text-sm font-medium ${!filtro ? 'bg-azul text-white' : 'bg-white text-slate-600 shadow-card'}`}>Todas</button>
+        <button onClick={() => setFiltro(null)} className={`shrink-0 rounded-full px-3.5 py-1.5 text-sm font-medium ${!filtro ? 'bg-azul text-white' : 'bg-superficie text-slate-600 shadow-card'}`}>Todas</button>
         {deptos.map((d) => (
-          <button key={d.id} onClick={() => setFiltro(d.id)} className={`shrink-0 rounded-full px-3.5 py-1.5 text-sm font-medium ${filtro === d.id ? 'text-white' : 'bg-white text-slate-600 shadow-card'}`} style={filtro === d.id ? { background: d.color } : undefined}>{d.nombre}</button>
+          <button key={d.id} onClick={() => setFiltro(d.id)} className={`shrink-0 rounded-full px-3.5 py-1.5 text-sm font-medium ${filtro === d.id ? 'text-white' : 'bg-superficie text-slate-600 shadow-card'}`} style={filtro === d.id ? { background: d.color } : undefined}>{d.nombre}</button>
         ))}
       </div>
       {cargando ? <Cargando /> : lista.length === 0 ? <Vacio icono={<Trophy />} titulo="No hay actividades publicadas" /> : <div className="space-y-3">{lista.map((a) => <TarjetaActividad key={a.id} a={a} />)}</div>}

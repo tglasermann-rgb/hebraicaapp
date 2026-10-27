@@ -119,7 +119,7 @@ export function Crud<T extends Tabla>({ tabla, campos, vista, filtro, inicial, b
         {buscar && (
           <label className="relative flex-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar…" className="w-full rounded-2xl border border-slate-200 bg-white py-2.5 pl-9 pr-3 text-[16px] outline-none focus:border-azul" />
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar…" className="w-full rounded-2xl border border-slate-200 bg-superficie py-2.5 pl-9 pr-3 text-[16px] outline-none focus:border-azul" />
           </label>
         )}
         {!soloLectura && (

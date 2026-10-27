@@ -6,13 +6,13 @@ import { CLUB } from '@/lib/brand'
 
 export function MarcoAcceso({ children }: { children: React.ReactNode }) {
   return (
-    <div className="malla relative mx-auto flex min-h-[100dvh] max-w-lg flex-col overflow-hidden">
-      <img src="./brand/isotipo-white.png" alt="" className="pointer-events-none absolute -left-16 top-24 h-80 rotate-[12deg] opacity-[.05]" />
-      <div className="relative flex flex-col items-center px-6 pb-9 pt-[calc(env(safe-area-inset-top)+3.5rem)]">
-        <img src="./brand/logo-white.png" alt="Hebraica" className="h-32 drop-shadow-[0_10px_30px_rgba(0,0,0,.25)]" />
-        <p className="mt-4 text-center text-[13px] font-medium tracking-wide text-white/60">{CLUB.lema}</p>
+    <div className="relative mx-auto flex min-h-[100dvh] max-w-lg flex-col overflow-hidden bg-fondo">
+      {/* Foto real del club con capa oscura */}
+      <div className="foto-oscura flex flex-col items-center bg-cover bg-center px-6 pb-16 pt-[calc(env(safe-area-inset-top)+3rem)]" style={{ backgroundImage: 'url(./brand/club-piscina.jpg)' }}>
+        <img src="./brand/logo-white.png" alt="Hebraica" className="relative h-28" />
+        <p className="relative mt-4 text-center text-[13px] font-medium tracking-wide text-white/85">{CLUB.lema}</p>
       </div>
-      <div className="animar-entrada relative flex-1 rounded-t-[36px] bg-white px-6 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] pt-8 shadow-flota">{children}</div>
+      <div className="animar-entrada relative -mt-8 flex-1 rounded-t-[36px] border-t border-white/10 bg-fondo px-6 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] pt-8">{children}</div>
     </div>
   )
 }

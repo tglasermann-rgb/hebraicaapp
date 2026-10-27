@@ -13,7 +13,7 @@ const ESTADO_PAGO = { pendiente: ['ambar', 'Por aprobar'], aprobado: ['verde', '
 
 export function Casilla({ marcada }: { marcada: boolean }) {
   return (
-    <span className={clsx('grid h-6 w-6 shrink-0 place-items-center rounded-full border-2 transition', marcada ? 'border-azul bg-azul text-white' : 'border-slate-300 bg-white')}>
+    <span className={clsx('grid h-6 w-6 shrink-0 place-items-center rounded-full border-2 transition', marcada ? 'border-azul bg-azul text-white' : 'border-slate-300 bg-superficie')}>
       {marcada && <Check className="h-3.5 w-3.5" strokeWidth={3} />}
     </span>
   )
@@ -143,7 +143,7 @@ export default function Cuenta() {
       {/* Barra para pagar la selección */}
       {vista === 'pagar' && elegidos.length > 0 && (
         <div className="fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+92px)] z-30 mx-auto max-w-lg px-4">
-          <div className="flex items-center gap-3 rounded-[24px] bg-tinta p-3 pl-5 text-white shadow-flota">
+          <div className="flex items-center gap-3 rounded-[24px] bg-elevada p-3 pl-5 text-white shadow-flota">
             <div className="min-w-0 flex-1">
               <p className="text-xs text-white/60">{elegidos.length} concepto(s)</p>
               <p className="font-display text-lg font-extrabold leading-tight">{fUSD(total)}{c.tasa && <span className="ml-2 text-xs font-medium text-white/60">{fBs(total * c.tasa.bs_por_usd)}</span>}</p>

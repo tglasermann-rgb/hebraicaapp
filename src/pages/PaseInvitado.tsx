@@ -10,9 +10,9 @@ export default function PaseInvitado() {
   const { codigo } = useParams()
   const { datos, cargando } = useDatos(() => api.paseInvitado(codigo!), [codigo])
   return (
-    <div className="mx-auto flex min-h-[100dvh] max-w-lg flex-col items-center bg-azul px-6 pb-10 pt-[calc(env(safe-area-inset-top)+2rem)] text-white">
+    <div className="mx-auto flex min-h-[100dvh] max-w-lg flex-col items-center bg-fondo px-6 pb-10 pt-[calc(env(safe-area-inset-top)+2rem)] text-white">
       <img src="./brand/logo-white.png" alt="Hebraica" className="h-28" />
-      <div className="mt-8 w-full rounded-3xl bg-white p-6 text-center text-slate-900">
+      <div className="mt-8 w-full rounded-3xl bg-superficie p-6 text-center text-slate-900">
         {cargando ? (
           <Cargando />
         ) : !datos ? (

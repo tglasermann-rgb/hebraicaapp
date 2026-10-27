@@ -51,6 +51,12 @@ Sin credenciales de Supabase, el app arranca en **modo demo** con datos de ejemp
 5. En **Authentication → SMTP Settings**, configurar un SMTP propio. El correo integrado de Supabase solo envía unos pocos mensajes por hora. [Resend](https://resend.com) es gratis hasta 3.000 correos/mes.
 6. Copiar en **Project Settings → API** la *URL* y la *anon key*.
 
+### Tasa BCV automática
+La tasa oficial se obtiene del **Banco Central de Venezuela vía [DolarApi](https://ve.dolarapi.com/v1/dolares/oficial)**.
+1. Desplegar la función: `supabase functions deploy tasa-bcv`.
+2. Activar las extensiones `pg_cron` y `pg_net`. Ejecutar `supabase/migrations/0002_tasa_bcv_automatica.sql` con tu URL y clave.
+3. La tasa se registra sola de lunes a viernes. En el panel → Tasa BCV también se puede consultar al momento o cargarla a mano.
+
 ### 2. Publicar el web app: GitHub Pages (gratis)
 1. En el repositorio: **Settings → Pages → Source: GitHub Actions**.
 2. En **Settings → Secrets and variables → Actions**, crear `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY`.

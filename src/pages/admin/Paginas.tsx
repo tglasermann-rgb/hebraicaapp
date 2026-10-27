@@ -1,7 +1,8 @@
-import { Download, FileUp, Users } from 'lucide-react'
+import { DollarSign, Download, FileUp, Users } from 'lucide-react'
 import { useState } from 'react'
 import { AreaTexto, Boton, Campo, Hoja, Insignia, MensajeError, Selector, Tarjeta, useAviso } from '@/components/ui'
 import { api } from '@/lib/api'
+import { obtenerTasaOficial } from '@/lib/bcv'
 import { depto } from '@/lib/brand'
 import { fDiaHora, fFechaCorta, fHace, fHoraTexto, fUSD, hoyISO } from '@/lib/formato'
 import { useDatos } from '@/lib/useDatos'
@@ -290,15 +291,43 @@ export function AdminCargos() {
   )
 }
 
+function ObtenerTasa({ alTerminar }: { alTerminar: () => void }) {
+  const aviso = useAviso()
+  const [cargando, setCargando] = useState(false)
+  async function obtener() {
+    setCargando(true)
+    try {
+      const t = await obtenerTasaOficial()
+      const existe = (await api.listar('tasas', { eq: { fecha: t.fecha } }))[0]
+      if (existe) await api.actualizar('tasas', existe.id, { bs_por_usd: t.valor })
+      else await api.crear('tasas', { fecha: t.fecha, bs_por_usd: t.valor })
+      aviso(`Tasa BCV ${t.fecha}: Bs. ${t.valor}`)
+      alTerminar()
+    } catch (e) {
+      aviso((e as Error).message, 'error')
+    } finally {
+      setCargando(false)
+    }
+  }
+  return (
+    <Boton bloque className="mb-3" cargando={cargando} onClick={obtener}>
+      <DollarSign className="h-4 w-4" /> Obtener tasa oficial del BCV ahora
+    </Boton>
+  )
+}
+
 export function AdminTasas() {
   return (
     <>
-      <p className="mb-3 text-sm text-slate-600">Registra la tasa oficial del BCV cada día hábil. El app usa la más reciente para calcular los montos en bolívares.</p>
+      <p className="mb-3 text-sm text-slate-600">
+        La tasa oficial del BCV se registra automáticamente cada día hábil (fuente: BCV vía DolarApi). También puedes consultarla ahora o cargarla a mano. El app usa siempre la más reciente.
+      </p>
       <Crud
         tabla="tasas"
         nombre="tasa"
         filtro={{ orden: { campo: 'fecha', asc: false }, limite: 60 }}
         inicial={{ fecha: hoyISO() }}
+        cabecera={(r) => <ObtenerTasa alTerminar={r} />}
         vista={(t) => ({ titulo: `Bs. ${t.bs_por_usd} por USD`, sub: fFechaCorta(t.fecha) })}
         campos={[
           { k: 'fecha', etiqueta: 'Fecha', tipo: 'fecha', req: true },

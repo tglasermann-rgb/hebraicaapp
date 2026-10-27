@@ -24,7 +24,7 @@ export default function AppLayout() {
 
       {/* Barra de navegación flotante */}
       <nav className="pointer-events-none fixed inset-x-0 bottom-0 z-40 mx-auto max-w-lg px-4 pb-[calc(env(safe-area-inset-bottom)+12px)]">
-        <div className="pointer-events-auto grid h-[68px] grid-cols-5 items-center rounded-[28px] border border-white/60 bg-white/80 px-1 shadow-flota backdrop-blur-2xl">
+        <div className="pointer-events-auto grid h-[68px] grid-cols-5 items-center rounded-[28px] border border-white/10 bg-elevada/80 px-1 shadow-flota backdrop-blur-2xl">
           {TABS.map(({ a, icono: Icono, texto, central }) => (
             <NavLink key={a} to={a} end={a === '/'} className="flex flex-col items-center justify-center">
               {({ isActive }) =>

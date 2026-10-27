@@ -83,7 +83,7 @@ function Eventos() {
 
 function Chip({ activo, color, onClick, children }: { activo: boolean; color?: string; onClick: () => void; children: React.ReactNode }) {
   return (
-    <button onClick={onClick} className={`shrink-0 rounded-full px-3.5 py-1.5 text-sm font-medium ${activo ? 'text-white' : 'bg-white text-slate-600 shadow-card'}`} style={activo ? { background: color ?? '#293E9B' } : undefined}>
+    <button onClick={onClick} className={`shrink-0 rounded-full px-3.5 py-1.5 text-sm font-medium ${activo ? 'text-white' : 'bg-superficie text-slate-600 shadow-card'}`} style={activo ? { background: color ?? '#293E9B' } : undefined}>
       {children}
     </button>
   )
