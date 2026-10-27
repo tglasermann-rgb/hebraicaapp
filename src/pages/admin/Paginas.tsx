@@ -89,7 +89,7 @@ function ImportarSocios({ alTerminar }: { alTerminar: () => void }) {
         <p className="text-sm text-slate-600">Exporta el listado del sistema administrativo a CSV con estas columnas: <code className="text-xs">accion, cedula, nombre, apellido, email, telefono, parentesco (titular/conyuge/hijo/otro), fecha_nacimiento (AAAA-MM-DD)</code>.</p>
         <Boton variante="fantasma" className="mt-2 px-0" onClick={plantilla}><Download className="h-4 w-4" /> Descargar plantilla</Boton>
         <input type="file" accept=".csv,text/csv" className="mt-3 block w-full text-sm" onChange={(e) => e.target.files?.[0] && leer(e.target.files[0])} />
-        {filas.length > 0 && <p className="mt-3 rounded-2xl bg-emerald-50 p-3 text-sm text-emerald-800">{filas.length} socios listos para importar. Luego cada uno activa su cuenta desde el app con su acción y cédula.</p>}
+        {filas.length > 0 && <p className="mt-3 rounded-2xl bg-emerald-50 p-3 text-sm text-emerald-800">{filas.length} socios listos para importar. Luego cada uno se registra en el app con su cédula y tú apruebas su acceso en Solicitudes de acceso.</p>}
         {error && <div className="mt-3"><MensajeError texto={error} /></div>}
         <Boton bloque className="mt-4" disabled={!filas.length} cargando={enviando} onClick={importar}>Importar</Boton>
       </Hoja>
@@ -108,7 +108,7 @@ export function AdminSocios() {
       cabecera={(recargar) => <ImportarSocios alTerminar={recargar} />}
       vista={(s) => ({
         titulo: `${s.nombre} ${s.apellido}`,
-        sub: `Acción ${s.accion ?? '—'} · C.I. ${s.cedula} · ${PARENTESCOS.find((p) => p.v === s.parentesco)?.t}`,
+        sub: `Acción ${s.accion ?? '—'} · C.I. ${s.cedula} · ${PARENTESCOS.find((p) => p.v === s.parentesco)?.t}${s.usuario ? ` · @${s.usuario}` : ''}`,
         extra: (
           <div className="flex flex-col items-end gap-1">
             {s.rol !== 'socio' && <Insignia color="azul">{NOMBRE_ROL[s.rol]}</Insignia>}
@@ -121,7 +121,7 @@ export function AdminSocios() {
         { k: 'cedula', etiqueta: 'Cédula', req: true },
         { k: 'nombre', etiqueta: 'Nombre', req: true },
         { k: 'apellido', etiqueta: 'Apellido', req: true },
-        { k: 'email', etiqueta: 'Correo', ayuda: 'Necesario para activar la cuenta del app' },
+        { k: 'email', etiqueta: 'Correo' },
         { k: 'telefono', etiqueta: 'Teléfono' },
         { k: 'parentesco', etiqueta: 'Parentesco', tipo: 'select', opciones: PARENTESCOS, req: true },
         { k: 'fecha_nacimiento', etiqueta: 'Fecha de nacimiento', tipo: 'fecha' },

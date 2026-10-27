@@ -1,4 +1,16 @@
-import type { ResultadoValidacion, Socio, Tabla, Tablas } from './types'
+import type { Registro, ResultadoValidacion, Socio, Tabla, Tablas } from './types'
+
+export interface DatosRegistro {
+  nombre: string
+  apellido: string
+  cedula: string
+  usuario: string
+  clave: string
+}
+
+/** Normaliza el usuario: minúsculas, sin espacios. */
+export const limpiarUsuario = (u: string) => u.trim().toLowerCase()
+export const USUARIO_VALIDO = /^[a-z0-9._-]{3,30}$/
 
 export interface Filtro<T> {
   eq?: Partial<Record<keyof T & string, string | number | boolean | null>>
@@ -25,12 +37,14 @@ export interface Backend {
   // ---- Autenticación ----
   sesionActual(): Promise<Sesion | null>
   alCambiarSesion(cb: (s: Sesion | null) => void): () => void
-  /** Inicia sesión con número de acción + cédula + contraseña. */
-  entrar(accion: string, cedula: string, clave: string): Promise<void>
-  /** Envía un código de 6 dígitos al correo registrado del socio. Devuelve el correo enmascarado. */
-  solicitarCodigo(accion: string, cedula: string): Promise<string>
-  /** Verifica el código y deja la sesión iniciada. */
-  verificarCodigo(accion: string, cedula: string, codigo: string): Promise<void>
+  /** Inicia sesión con usuario y contraseña. */
+  entrar(usuario: string, clave: string): Promise<void>
+  /** Primera vez: crea el usuario y envía la solicitud de acceso para que Administración la apruebe. */
+  registrar(datos: DatosRegistro): Promise<void>
+  /** Solicitud de acceso del usuario autenticado (si aún no está aprobado). */
+  miRegistro(): Promise<Registro | null>
+  /** Corrige y reenvía una solicitud rechazada. */
+  reenviarRegistro(datos: Omit<DatosRegistro, 'usuario' | 'clave'>): Promise<void>
   cambiarClave(nueva: string): Promise<void>
   salir(): Promise<void>
   /** Socio vinculado al usuario autenticado. */
@@ -52,6 +66,8 @@ export interface Backend {
   inscribir(actividadId: string, socioId: string): Promise<void>
   comprarEntradas(eventoId: string, asistentes: string[]): Promise<void>
   revisarPago(pagoId: string, aprobado: boolean, nota: string): Promise<void>
+  aprobarRegistro(registroId: string, accion: string, parentesco: string): Promise<void>
+  rechazarRegistro(registroId: string, motivo: string): Promise<void>
   paseInvitado(codigo: string): Promise<{ nombre: string; fecha: string; anfitrion: string; estado: string } | null>
   subirArchivo(bucket: 'comprobantes' | 'publico', archivo: File): Promise<string>
   urlArchivo(bucket: 'comprobantes' | 'publico', ruta: string): Promise<string>

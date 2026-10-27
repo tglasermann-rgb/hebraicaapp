@@ -38,18 +38,16 @@ npm install
 npm run dev
 ```
 
-Sin credenciales de Supabase, el app arranca en **modo demo** con datos de ejemplo guardados en el navegador. En la pantalla de entrada hay botones para entrar como Socio, Admin o Seguridad. En el modo demo, el código de activación es `123456`.
+Sin credenciales de Supabase, el app arranca en **modo demo** con datos de ejemplo guardados en el navegador. En la pantalla de entrada hay botones para entrar como Socio, Admin o Seguridad. Usuarios de prueba: `david` / `demo1234` (socio), `admin` / `admin1234`, `seguridad` / `seguridad1234`. Hay dos solicitudes de acceso de ejemplo esperando aprobación en el panel.
 
 ## Puesta en producción (todo gratis para ~1.000 socios)
 
 ### 1. Base de datos: Supabase (plan gratuito)
 1. Crear un proyecto en https://supabase.com (región: `us-east-1`, la más cercana a Venezuela).
 2. En **SQL Editor**, ejecutar `supabase/migrations/0001_esquema.sql`.
-3. Editar `supabase/seed.sql` con tus datos de administrador y ejecutarlo.
-4. En **Authentication → Email Templates**, editar las plantillas *Magic Link* y *Confirm signup* para que muestren el código:
-   `Tu código de Mi Hebraica es: {{ .Token }}`
-5. En **Authentication → SMTP Settings**, configurar un SMTP propio. El correo integrado de Supabase solo envía unos pocos mensajes por hora. [Resend](https://resend.com) es gratis hasta 3.000 correos/mes.
-6. Copiar en **Project Settings → API** la *URL* y la *anon key*.
+3. En **Authentication → Providers → Email**, dejar Email activado y **desactivar "Confirm email"**. El acceso es con usuario y contraseña; el app usa internamente un correo derivado del usuario y no envía correos.
+4. Ejecutar `supabase/seed.sql` y seguir sus instrucciones para aprobarte como primer administrador.
+5. Copiar en **Project Settings → API** la *URL* y la *anon key*.
 
 ### Tasa BCV automática
 La tasa oficial se obtiene del **Banco Central de Venezuela vía [DolarApi](https://ve.dolarapi.com/v1/dolares/oficial)**.
@@ -66,7 +64,13 @@ Los socios lo abren en el teléfono y lo instalan con **Compartir → Agregar a 
 
 ### 3. Cargar socios
 Panel → Socios → **Importar desde Excel (CSV)**. Columnas: `accion, cedula, nombre, apellido, email, telefono, parentesco, fecha_nacimiento`.
-Cada socio entra con **"Activa tu cuenta"** usando su acción y cédula. Recibe un código en su correo y crea su contraseña.
+Cada persona entra a **"¿Es tu primera vez? → Registrarme"**, escribe nombre, apellido y cédula, y crea su usuario y contraseña.
+La solicitud aparece en **Panel → Solicitudes de acceso**:
+- Si la cédula coincide con un socio cargado, se aprueba con un toque y queda vinculado a su acción.
+- Si no, Administración indica la acción y el parentesco al aprobar.
+- Si se rechaza (con motivo), la persona puede corregir sus datos y reenviar.
+
+¿Olvidó su contraseña? Por ahora se gestiona con Atención al Público (Supabase → Authentication → Users).
 
 ## App Store y Google Play
 

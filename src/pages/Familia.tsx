@@ -42,7 +42,7 @@ export default function Familia() {
                 <p className="truncate font-medium text-slate-900">{f.nombre} {f.apellido}</p>
                 <p className="text-sm text-slate-500">{PARENTESCO[f.parentesco]}{edad(f.fecha_nacimiento) != null && ` · ${edad(f.fecha_nacimiento)} años`}</p>
               </div>
-              {f.user_id ? <Insignia color="verde">Usa el app</Insignia> : f.email ? <Insignia color="gris">Sin activar</Insignia> : null}
+              {f.user_id ? <Insignia color="verde">Usa el app</Insignia> : <Insignia color="gris">Sin usuario</Insignia>}
             </div>
           ))}
         </Lista>
@@ -50,7 +50,7 @@ export default function Familia() {
       <Boton variante="secundario" bloque className="mt-4" onClick={() => setAbrir(true)}>
         <UserPlus className="h-5 w-5" /> Agregar o actualizar un familiar
       </Boton>
-      <p className="mt-3 text-center text-xs text-slate-500">Para que tu cónyuge o hijos mayores usen el app con su propia cuenta, deben tener correo registrado y activar su cuenta con su cédula.</p>
+      <p className="mt-3 text-center text-xs text-slate-500">Para que tu cónyuge o hijos usen el app, cada uno se registra con su cédula en «¿Es tu primera vez?» y Administración aprueba su acceso.</p>
 
       <Hoja abierta={abrir} onCerrar={() => setAbrir(false)} titulo="Solicitud a Admisión">
         <p className="text-sm text-slate-600">Indica el nombre completo, cédula, parentesco, fecha de nacimiento y correo del familiar. Admisión te contactará si necesita documentos.</p>

@@ -63,6 +63,7 @@ export default function Perfil() {
       </Tarjeta>
       <Seccion titulo="Datos">
         <Lista>
+          <FilaEnlace titulo="Usuario" sub={socio.usuario ? `@${socio.usuario}` : '—'} />
           <FilaEnlace titulo="Correo" sub={socio.email ?? '—'} />
           <FilaEnlace titulo="Teléfono" sub={socio.telefono ?? '—'} />
           {socio.fecha_nacimiento && <FilaEnlace titulo="Fecha de nacimiento" sub={fFechaCorta(socio.fecha_nacimiento)} />}

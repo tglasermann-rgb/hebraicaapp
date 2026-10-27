@@ -16,6 +16,7 @@ create table public.socios (
   cedula text not null unique,
   nombre text not null,
   apellido text not null,
+  usuario text unique,
   email text unique,
   telefono text,
   parentesco text not null default 'titular' check (parentesco in ('titular','conyuge','hijo','otro')),
@@ -26,6 +27,22 @@ create table public.socios (
   created_at timestamptz not null default now()
 );
 create index on public.socios (accion);
+
+-- Solicitudes de acceso: la persona se registra (nombre, apellido, cédula, usuario y contraseña)
+-- y Administración la aprueba vinculándola a su ficha de socio.
+create table public.registros (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null unique references auth.users(id) on delete cascade,
+  nombre text not null,
+  apellido text not null,
+  cedula text not null,
+  usuario text not null unique,
+  estado text not null default 'pendiente' check (estado in ('pendiente','aprobado','rechazado')),
+  motivo text,
+  socio_id uuid,
+  created_at timestamptz not null default now()
+);
+create unique index registro_pendiente_unico on public.registros (cedula) where estado = 'pendiente';
 
 create table public.cargos (
   id uuid primary key default gen_random_uuid(),
@@ -284,6 +301,7 @@ language sql stable as $$ select public.tiene_rol(array['admin','administracion'
 -- ---------------------------------------------------------------------------
 
 alter table public.socios enable row level security;
+alter table public.registros enable row level security;
 alter table public.cargos enable row level security;
 alter table public.pagos enable row level security;
 alter table public.tasas enable row level security;
@@ -310,6 +328,15 @@ create policy socios_leer on public.socios for select to authenticated
   using (user_id = auth.uid() or (accion is not null and accion = public.mi_accion()) or public.es_staff());
 create policy socios_admin on public.socios for all to authenticated
   using (public.tiene_rol(array['admin','administracion'])) with check (public.tiene_rol(array['admin','administracion']));
+
+-- Solicitudes de acceso: cada persona crea y ve la suya; Administración ve todas (aprueba vía función)
+create policy registros_crear on public.registros for insert to authenticated
+  with check (user_id = auth.uid() and estado = 'pendiente');
+create policy registros_leer on public.registros for select to authenticated
+  using (user_id = auth.uid() or public.tiene_rol(array['admin','administracion']));
+-- Si fue rechazada, la persona puede corregir sus datos y volver a enviarla
+create policy registros_reenviar on public.registros for update to authenticated
+  using (user_id = auth.uid() and estado = 'rechazado') with check (user_id = auth.uid() and estado = 'pendiente');
 
 -- Estado de cuenta
 create policy cargos_leer on public.cargos for select to authenticated
@@ -404,22 +431,36 @@ create policy configuracion_admin on public.configuracion for all to authenticat
 -- Funciones RPC (reglas de negocio)
 -- ---------------------------------------------------------------------------
 
--- Devuelve el correo de un socio solo si acción + cédula coinciden. Se usa para iniciar sesión
--- con número de acción sin exponer la lista de correos.
-create or replace function public.correo_para_login(p_accion text, p_cedula text) returns text
-language sql stable security definer set search_path = public as $$
-  select email from public.socios
-  where accion = trim(p_accion) and cedula = regexp_replace(p_cedula, '[^0-9]', '', 'g') and estado = 'activo'
-  limit 1
-$$;
-grant execute on function public.correo_para_login(text, text) to anon, authenticated;
+-- Aprueba una solicitud de acceso. Si ya existe una ficha de socio con esa cédula se vincula;
+-- si no, se crea con la acción y parentesco indicados.
+create or replace function public.aprobar_registro(p_registro uuid, p_accion text, p_parentesco text) returns void
+language plpgsql security definer set search_path = public as $$
+declare v_r public.registros; v_s public.socios;
+begin
+  if not public.tiene_rol(array['admin','administracion']) then raise exception 'No autorizado'; end if;
+  select * into v_r from public.registros where id = p_registro and estado = 'pendiente' for update;
+  if v_r.id is null then raise exception 'La solicitud ya fue procesada'; end if;
+  select * into v_s from public.socios where cedula = v_r.cedula;
+  if v_s.id is not null and v_s.user_id is not null then raise exception 'Esa cédula ya tiene un usuario activo'; end if;
+  if v_s.id is null then
+    if coalesce(trim(p_accion), '') = '' then raise exception 'Indica el número de acción'; end if;
+    insert into public.socios (user_id, usuario, accion, cedula, nombre, apellido, parentesco)
+      values (v_r.user_id, v_r.usuario, trim(p_accion), v_r.cedula, v_r.nombre, v_r.apellido, coalesce(nullif(p_parentesco, ''), 'titular'))
+      returning * into v_s;
+  else
+    update public.socios set user_id = v_r.user_id, usuario = v_r.usuario where id = v_s.id returning * into v_s;
+  end if;
+  update public.registros set estado = 'aprobado', socio_id = v_s.id where id = v_r.id;
+  insert into public.notificaciones(titulo, cuerpo, destino, socio_id, enlace)
+    values ('¡Bienvenido a Mi Hebraica!', 'Tu cuenta fue aprobada. Ya puedes usar tu carnet digital.', 'socio', v_s.id, '/carnet');
+end $$;
 
--- Vincula el usuario autenticado con su ficha de socio (por correo). Se llama tras verificar el código.
-create or replace function public.vincular_socio() returns void
+create or replace function public.rechazar_registro(p_registro uuid, p_motivo text) returns void
 language plpgsql security definer set search_path = public as $$
 begin
-  update public.socios set user_id = auth.uid()
-  where lower(email) = lower(auth.jwt() ->> 'email') and (user_id is null or user_id = auth.uid());
+  if not public.tiene_rol(array['admin','administracion']) then raise exception 'No autorizado'; end if;
+  update public.registros set estado = 'rechazado', motivo = nullif(trim(p_motivo), '') where id = p_registro and estado = 'pendiente';
+  if not found then raise exception 'La solicitud ya fue procesada'; end if;
 end $$;
 
 -- Carnet digital: token de un solo uso con vigencia de 30 segundos (evita capturas de pantalla).

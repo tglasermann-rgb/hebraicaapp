@@ -1,11 +1,11 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
-import type { Backend, Filtro, Sesion } from './backend'
-import type { ResultadoValidacion, Socio, Tabla } from './types'
+import { limpiarUsuario, USUARIO_VALIDO, type Backend, type Filtro, type Sesion } from './backend'
+import type { Registro, ResultadoValidacion, Socio, Tabla } from './types'
 
-function enmascarar(email: string) {
-  const [u, d] = email.split('@')
-  return `${u.slice(0, 2)}${'•'.repeat(Math.max(u.length - 2, 3))}@${d}`
-}
+// Supabase Auth necesita un correo: cada usuario se guarda con un correo interno derivado de su nombre
+// de usuario. Requiere desactivar "Confirm email" en Authentication → Providers → Email.
+const DOMINIO = 'usuarios.mihebraica.app'
+const correoDe = (usuario: string) => `${limpiarUsuario(usuario)}@${DOMINIO}`
 
 function err(e: { message: string } | null) {
   if (e) throw new Error(e.message)
@@ -15,13 +15,6 @@ export function crearSupabaseBackend(url: string, key: string): Backend {
   const sb: SupabaseClient = createClient(url, key, {
     auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false },
   })
-
-  async function correo(accion: string, cedula: string) {
-    const { data, error } = await sb.rpc('correo_para_login', { p_accion: accion, p_cedula: cedula })
-    err(error)
-    if (!data) throw new Error('No encontramos un socio activo con esa acción y cédula, o no tiene correo registrado. Contacte a Atención al Público.')
-    return data as string
-  }
 
   const aSesion = (s: { user: { id: string; email?: string } } | null): Sesion | null =>
     s ? { userId: s.user.id, email: s.user.email ?? '' } : null
@@ -37,24 +30,38 @@ export function crearSupabaseBackend(url: string, key: string): Backend {
       const { data } = sb.auth.onAuthStateChange((_e, s) => cb(aSesion(s)))
       return () => data.subscription.unsubscribe()
     },
-    async entrar(accion, cedula, clave) {
-      const email = await correo(accion, cedula)
-      const { error } = await sb.auth.signInWithPassword({ email, password: clave })
-      if (error) throw new Error(error.message.includes('Invalid') ? 'Contraseña incorrecta' : error.message)
-      await sb.rpc('vincular_socio')
+    async entrar(usuario, clave) {
+      const { error } = await sb.auth.signInWithPassword({ email: correoDe(usuario), password: clave })
+      if (error) throw new Error(error.message.includes('Invalid') ? 'Usuario o contraseña incorrectos' : error.message)
     },
-    async solicitarCodigo(accion, cedula) {
-      const email = await correo(accion, cedula)
-      const { error } = await sb.auth.signInWithOtp({ email, options: { shouldCreateUser: true } })
+    async registrar(d) {
+      if (!USUARIO_VALIDO.test(limpiarUsuario(d.usuario))) throw new Error('El usuario debe tener de 3 a 30 letras o números (sin espacios)')
+      const { data, error } = await sb.auth.signUp({ email: correoDe(d.usuario), password: d.clave })
+      if (error) throw new Error(/registered|exists/i.test(error.message) ? 'Ese usuario ya existe. Elige otro.' : error.message)
+      if (!data.session) throw new Error('Falta desactivar la confirmación por correo en Supabase (ver README).')
+      const { error: e2 } = await sb.from('registros').insert({
+        user_id: data.user!.id,
+        nombre: d.nombre.trim(),
+        apellido: d.apellido.trim(),
+        cedula: d.cedula.replace(/\D/g, ''),
+        usuario: limpiarUsuario(d.usuario),
+      })
+      if (e2) throw new Error(e2.message.includes('registro_pendiente_unico') ? 'Ya hay una solicitud en revisión con esa cédula.' : e2.message)
+    },
+    async miRegistro() {
+      const { data: u } = await sb.auth.getUser()
+      if (!u.user) return null
+      const { data, error } = await sb.from('registros').select('*').eq('user_id', u.user.id).maybeSingle()
       err(error)
-      return enmascarar(email)
+      return data as Registro | null
     },
-    async verificarCodigo(accion, cedula, codigo) {
-      const email = await correo(accion, cedula)
-      const { error } = await sb.auth.verifyOtp({ email, token: codigo.trim(), type: 'email' })
-      if (error) throw new Error('Código inválido o vencido')
-      const { error: e2 } = await sb.rpc('vincular_socio')
-      err(e2)
+    async reenviarRegistro(d) {
+      const { data: u } = await sb.auth.getUser()
+      const { error } = await sb
+        .from('registros')
+        .update({ nombre: d.nombre.trim(), apellido: d.apellido.trim(), cedula: d.cedula.replace(/\D/g, ''), estado: 'pendiente', motivo: null })
+        .eq('user_id', u.user!.id)
+      err(error)
     },
     async cambiarClave(nueva) {
       const { error } = await sb.auth.updateUser({ password: nueva })
@@ -136,6 +143,14 @@ export function crearSupabaseBackend(url: string, key: string): Backend {
     },
     async comprarEntradas(eventoId, asistentes) {
       const { error } = await sb.rpc('comprar_entradas', { p_evento: eventoId, p_asistentes: asistentes })
+      err(error)
+    },
+    async aprobarRegistro(registroId, accion, parentesco) {
+      const { error } = await sb.rpc('aprobar_registro', { p_registro: registroId, p_accion: accion, p_parentesco: parentesco })
+      err(error)
+    },
+    async rechazarRegistro(registroId, motivo) {
+      const { error } = await sb.rpc('rechazar_registro', { p_registro: registroId, p_motivo: motivo })
       err(error)
     },
     async revisarPago(pagoId, aprobado, nota) {

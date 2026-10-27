@@ -3,10 +3,15 @@
 -- Todo lo marcado "(completar)" debe editarse desde el panel de administración.
 -- ============================================================================
 
--- 1) Primer administrador. Cambia los datos por los tuyos antes de ejecutar.
---    Luego entra al app con "Activa tu cuenta" usando esta acción y cédula.
-insert into public.socios (accion, cedula, nombre, apellido, email, parentesco, rol)
-values ('0001', '00000000', 'Nombre', 'Apellido', 'tu-correo@ejemplo.com', 'titular', 'admin');
+-- 1) Primer administrador.
+--    a) Abre el app y usa "Soy nuevo · Registrarme" con tu nombre, cédula, usuario y contraseña.
+--    b) Luego ejecuta esto (cambia 'tu_usuario' y la acción) para aprobarte como administrador:
+--
+-- insert into public.socios (user_id, usuario, accion, cedula, nombre, apellido, rol)
+--   select user_id, usuario, '0001', cedula, nombre, apellido, 'admin' from public.registros where usuario = 'tu_usuario';
+-- update public.registros set estado = 'aprobado' where usuario = 'tu_usuario';
+--
+--    Desde ahí, las demás solicitudes se aprueban en el panel → Solicitudes de acceso.
 
 -- 2) Datos bancarios para reportar pagos
 insert into public.configuracion (id, valor) values ('datos_bancarios', '{

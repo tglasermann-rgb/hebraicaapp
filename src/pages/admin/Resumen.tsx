@@ -13,6 +13,7 @@ export default function Resumen() {
   const { datos } = useDatos(async () => {
     const r: { k: string; v: number; a: string }[] = []
     if (tieneRol('administracion')) {
+      r.push({ k: 'Accesos por aprobar', v: (await api.listar('registros', { eq: { estado: 'pendiente' } })).length, a: '/admin/accesos-nuevos' })
       r.push({ k: 'Pagos por aprobar', v: (await api.listar('pagos', { eq: { estado: 'pendiente' } })).length, a: '/admin/pagos' })
       r.push({ k: 'Socios registrados', v: (await api.listar('socios')).length, a: '/admin/socios' })
     }

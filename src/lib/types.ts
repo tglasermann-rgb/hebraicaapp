@@ -22,6 +22,7 @@ export interface Socio {
   cedula: string
   nombre: string
   apellido: string
+  usuario: string | null
   email: string | null
   telefono: string | null
   parentesco: Parentesco
@@ -29,6 +30,19 @@ export interface Socio {
   foto_url: string | null
   estado: 'activo' | 'suspendido'
   rol: Rol
+  created_at: string
+}
+
+export interface Registro {
+  id: string
+  user_id: string
+  nombre: string
+  apellido: string
+  cedula: string
+  usuario: string
+  estado: 'pendiente' | 'aprobado' | 'rechazado'
+  motivo: string | null
+  socio_id: string | null
   created_at: string
 }
 
@@ -292,6 +306,7 @@ export interface ResultadoValidacion {
 
 export interface Tablas {
   socios: Socio
+  registros: Registro
   cargos: Cargo
   pagos: Pago
   tasas: Tasa

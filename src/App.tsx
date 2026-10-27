@@ -6,14 +6,15 @@ import AppLayout from './components/AppLayout'
 import { AvisoProvider, Boton, Cargando } from './components/ui'
 import { biometriaActiva, verificarBiometria } from './lib/biometria'
 import type { Rol } from './lib/types'
-import Activar from './pages/Activar'
 import Actividades, { DetalleActividad, Macabilandia } from './pages/Actividades'
 import Agenda from './pages/Agenda'
 import Carnet from './pages/Carnet'
 import { Album, Directorio, Galeria, Noticia, Noticias, Restaurantes } from './pages/Contenido'
 import Cuenta from './pages/Cuenta'
 import Entradas from './pages/Entradas'
-import Entrar, { MarcoAcceso } from './pages/Entrar'
+import EnRevision from './pages/EnRevision'
+import Entrar from './pages/Entrar'
+import Registro from './pages/Registro'
 import Evento from './pages/Evento'
 import Familia from './pages/Familia'
 import Inicio from './pages/Inicio'
@@ -32,6 +33,7 @@ const AdminLayout = lazy(() => import('./pages/admin/AdminLayout'))
 const Escaner = lazy(() => import('./pages/admin/Escaner'))
 const Reportes = lazy(() => import('./pages/admin/Reportes'))
 const Resumen = lazy(() => import('./pages/admin/Resumen'))
+const SolicitudesAcceso = lazy(() => import('./pages/admin/Accesos'))
 const pagina = (nombre: string) => lazy(() => import('./pages/admin/Paginas').then((m) => ({ default: (m as any)[nombre] })))
 const A = Object.fromEntries(
   ['AdminSocios', 'AdminPagos', 'AdminCargos', 'AdminTasas', 'AdminInstalaciones', 'AdminReservas', 'AdminActividades', 'AdminEventos', 'AdminNoticias', 'AdminGaleria', 'AdminNotificaciones', 'AdminSolicitudes', 'AdminDirectorio', 'AdminRestaurantes', 'AdminConfiguracion', 'AdminAccesos'].map((n) => [n, pagina(n)]),
@@ -58,20 +60,13 @@ function Bloqueo({ children }: { children: ReactNode }) {
 }
 
 function Protegida() {
-  const { cargando, sesion, socio, salir } = useAuth()
+  const { cargando, sesion, socio } = useAuth()
   const loc = useLocation()
   if (cargando) return <Pantalla><img src="./brand/logo-white.png" alt="Hebraica" className="mx-auto h-32 animate-pulse" /></Pantalla>
   if (!sesion) return <Navigate to="/entrar" replace state={{ desde: loc.pathname }} />
   // Seguridad solo usa el escáner: no ve la parte de socios
   if (socio?.rol === 'seguridad' && !loc.pathname.startsWith('/admin')) return <Navigate to="/admin/escaner" replace />
-  if (!socio)
-    return (
-      <MarcoAcceso>
-        <h1 className="font-display text-xl font-bold text-marino">Cuenta no vinculada</h1>
-        <p className="mt-2 text-slate-600">Tu correo no está asociado a ningún socio activo. Comunícate con Atención al Público para actualizar tus datos.</p>
-        <Boton bloque className="mt-6" onClick={salir}>Salir</Boton>
-      </MarcoAcceso>
-    )
+  if (!socio) return <EnRevision />
   return (
     <Bloqueo>
       <Outlet />
@@ -105,7 +100,7 @@ export default function App() {
         <HashRouter>
           <Routes>
             <Route path="/entrar" element={<Publica><Entrar /></Publica>} />
-            <Route path="/activar" element={<Activar />} />
+            <Route path="/registro" element={<Publica><Registro /></Publica>} />
             <Route path="/pase/:codigo" element={<PaseInvitado />} />
             <Route path="/privacidad" element={<div className="mx-auto max-w-lg"><Privacidad /></div>} />
             <Route path="/terminos" element={<div className="mx-auto max-w-lg"><Terminos /></div>} />
@@ -149,6 +144,7 @@ export default function App() {
                     <Route path="accesos" element={<A.AdminAccesos />} />
                   </Route>
                   <Route element={<SoloStaff roles={['administracion']} />}>
+                    <Route path="accesos-nuevos" element={<SolicitudesAcceso />} />
                     <Route path="socios" element={<A.AdminSocios />} />
                     <Route path="pagos" element={<A.AdminPagos />} />
                     <Route path="cargos" element={<A.AdminCargos />} />

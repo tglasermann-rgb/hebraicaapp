@@ -2,7 +2,7 @@ import { addDays, format, subDays } from 'date-fns'
 import type { Tablas } from './types'
 
 /** Datos de ejemplo para el modo demo. Todos los nombres y montos son ficticios. */
-export type DB = { [K in keyof Tablas]: Tablas[K][] } & { claves: Record<string, string> }
+export type DB = { [K in keyof Tablas]: Tablas[K][] } & { claves: Record<string, string>; usuarios: Record<string, string> }
 
 const d = (n: number) => format(addDays(new Date(), n), 'yyyy-MM-dd')
 const dt = (n: number, h: string) => `${d(n)}T${h}:00-04:00`
@@ -11,13 +11,13 @@ const base = { created_at: ahora }
 
 export function semilla(): DB {
   const socios: Tablas['socios'][] = [
-    { ...base, id: 's1', user_id: 'u1', accion: '1234', cedula: '12345678', nombre: 'David', apellido: 'Cohen', email: 'david@ejemplo.com', telefono: '0414-1234567', parentesco: 'titular', fecha_nacimiento: '1982-05-10', foto_url: null, estado: 'activo', rol: 'socio' },
-    { ...base, id: 's2', user_id: null, accion: '1234', cedula: '12345679', nombre: 'Sara', apellido: 'Cohen', email: 'sara@ejemplo.com', telefono: '0414-7654321', parentesco: 'conyuge', fecha_nacimiento: '1984-08-22', foto_url: null, estado: 'activo', rol: 'socio' },
-    { ...base, id: 's3', user_id: null, accion: '1234', cedula: '30123456', nombre: 'Daniel', apellido: 'Cohen', email: null, telefono: null, parentesco: 'hijo', fecha_nacimiento: '2012-02-14', foto_url: null, estado: 'activo', rol: 'socio' },
-    { ...base, id: 's4', user_id: null, accion: '1234', cedula: '32123456', nombre: 'Ana', apellido: 'Cohen', email: null, telefono: null, parentesco: 'hijo', fecha_nacimiento: '2016-11-03', foto_url: null, estado: 'activo', rol: 'socio' },
-    { ...base, id: 's5', user_id: 'u2', accion: '0001', cedula: '11111111', nombre: 'Raquel', apellido: 'Levy', email: 'admin@ejemplo.com', telefono: null, parentesco: 'titular', fecha_nacimiento: null, foto_url: null, estado: 'activo', rol: 'admin' },
-    { ...base, id: 's6', user_id: 'u3', accion: 'E-001', cedula: '22222222', nombre: 'José', apellido: 'Pérez', email: 'seguridad@ejemplo.com', telefono: null, parentesco: 'titular', fecha_nacimiento: null, foto_url: null, estado: 'activo', rol: 'seguridad' },
-    { ...base, id: 's7', user_id: null, accion: '5678', cedula: '9876543', nombre: 'Moisés', apellido: 'Benzaquén', email: 'moises@ejemplo.com', telefono: null, parentesco: 'titular', fecha_nacimiento: null, foto_url: null, estado: 'activo', rol: 'socio' },
+    { ...base, id: 's1', user_id: 'u1', usuario: 'david', accion: '1234', cedula: '12345678', nombre: 'David', apellido: 'Cohen', email: 'david@ejemplo.com', telefono: '0414-1234567', parentesco: 'titular', fecha_nacimiento: '1982-05-10', foto_url: null, estado: 'activo', rol: 'socio' },
+    { ...base, id: 's2', user_id: null, usuario: null, accion: '1234', cedula: '12345679', nombre: 'Sara', apellido: 'Cohen', email: 'sara@ejemplo.com', telefono: '0414-7654321', parentesco: 'conyuge', fecha_nacimiento: '1984-08-22', foto_url: null, estado: 'activo', rol: 'socio' },
+    { ...base, id: 's3', user_id: null, usuario: null, accion: '1234', cedula: '30123456', nombre: 'Daniel', apellido: 'Cohen', email: null, telefono: null, parentesco: 'hijo', fecha_nacimiento: '2012-02-14', foto_url: null, estado: 'activo', rol: 'socio' },
+    { ...base, id: 's4', user_id: null, usuario: null, accion: '1234', cedula: '32123456', nombre: 'Ana', apellido: 'Cohen', email: null, telefono: null, parentesco: 'hijo', fecha_nacimiento: '2016-11-03', foto_url: null, estado: 'activo', rol: 'socio' },
+    { ...base, id: 's5', user_id: 'u2', usuario: 'admin', accion: '0001', cedula: '11111111', nombre: 'Raquel', apellido: 'Levy', email: 'admin@ejemplo.com', telefono: null, parentesco: 'titular', fecha_nacimiento: null, foto_url: null, estado: 'activo', rol: 'admin' },
+    { ...base, id: 's6', user_id: 'u3', usuario: 'seguridad', accion: 'E-001', cedula: '22222222', nombre: 'José', apellido: 'Pérez', email: 'seguridad@ejemplo.com', telefono: null, parentesco: 'titular', fecha_nacimiento: null, foto_url: null, estado: 'activo', rol: 'seguridad' },
+    { ...base, id: 's7', user_id: null, usuario: null, accion: '5678', cedula: '9876543', nombre: 'Moisés', apellido: 'Benzaquén', email: 'moises@ejemplo.com', telefono: null, parentesco: 'titular', fecha_nacimiento: null, foto_url: null, estado: 'activo', rol: 'socio' },
   ]
 
   const mes = (n: number) => format(subDays(new Date(), 30 * n), 'yyyy-MM-01')
@@ -120,6 +120,11 @@ export function semilla(): DB {
   return {
     socios, cargos, pagos, tasas, instalaciones, reservas: [], actividades, inscripciones, eventos, entradas: [],
     noticias, albumes, fotos: [], directorio, restaurantes, solicitudes, invitados: [], notificaciones, accesos: [], configuracion,
-    claves: { u1: 'demo1234', u2: 'admin1234', u3: 'seguridad1234' },
+    registros: [
+      { id: 'rg1', user_id: 'u4', nombre: 'Sara', apellido: 'Cohen', cedula: '12345679', usuario: 'sara', estado: 'pendiente', motivo: null, socio_id: null, created_at: ahora },
+      { id: 'rg2', user_id: 'u5', nombre: 'Rebeca', apellido: 'Toledano', cedula: '18765432', usuario: 'rebeca.t', estado: 'pendiente', motivo: null, socio_id: null, created_at: ahora },
+    ],
+    claves: { u1: 'demo1234', u2: 'admin1234', u3: 'seguridad1234', u4: 'sara1234', u5: 'rebeca1234' },
+    usuarios: { david: 'u1', admin: 'u2', seguridad: 'u3', sara: 'u4', 'rebeca.t': 'u5' },
   }
 }

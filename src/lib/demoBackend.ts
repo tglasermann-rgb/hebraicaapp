@@ -1,14 +1,13 @@
 import { format } from 'date-fns'
-import type { Backend, Filtro, Sesion } from './backend'
+import { limpiarUsuario, USUARIO_VALIDO, type Backend, type Filtro, type Sesion } from './backend'
 import { obtenerTasaOficial } from './bcv'
 import { semilla, type DB } from './demoSeed'
 import type { Tabla } from './types'
 
 // Modo demo: replica las reglas de supabase/migrations en el navegador para poder probar el app sin servidor.
 
-const CLAVE_DB = 'mi-hebraica-demo-v2'
+const CLAVE_DB = 'mi-hebraica-demo-v3'
 const CLAVE_SESION = 'mi-hebraica-demo-sesion'
-const CODIGO_DEMO = '123456'
 
 function cargar(): DB {
   try {
@@ -58,11 +57,6 @@ export function crearDemoBackend(): Backend {
     oyentes.forEach((cb) => cb(s))
   }
 
-  const buscar = (accion: string, cedula: string) => {
-    const s = db.socios.find((x) => x.accion === accion.trim() && x.cedula === cedula.replace(/\D/g, '') && x.estado === 'activo')
-    if (!s || !s.email) throw new Error('No encontramos un socio activo con esa acción y cédula, o no tiene correo registrado. Contacte a Atención al Público.')
-    return s
-  }
   const yo = () => {
     const s = db.socios.find((x) => sesion && x.user_id === sesion.userId)
     if (!s) throw new Error('No autenticado')
@@ -81,25 +75,35 @@ export function crearDemoBackend(): Backend {
       oyentes.add(cb)
       return () => oyentes.delete(cb)
     },
-    async entrar(accion, cedula, clave) {
+    async entrar(usuario, clave) {
       await espera()
-      const s = buscar(accion, cedula)
-      if (!s.user_id || db.claves[s.user_id] !== clave) throw new Error('Contraseña incorrecta')
-      fijarSesion({ userId: s.user_id, email: s.email! })
+      const uid = db.usuarios[limpiarUsuario(usuario)]
+      if (!uid || db.claves[uid] !== clave) throw new Error('Usuario o contraseña incorrectos')
+      fijarSesion({ userId: uid, email: limpiarUsuario(usuario) })
     },
-    async solicitarCodigo(accion, cedula) {
+    async registrar(d) {
       await espera()
-      const s = buscar(accion, cedula)
-      const [u, dom] = s.email!.split('@')
-      return `${u.slice(0, 2)}•••@${dom} (modo demo: el código es ${CODIGO_DEMO})`
-    },
-    async verificarCodigo(accion, cedula, codigo) {
-      await espera()
-      if (codigo.trim() !== CODIGO_DEMO) throw new Error('Código inválido o vencido')
-      const s = buscar(accion, cedula)
-      if (!s.user_id) s.user_id = id()
+      const usuario = limpiarUsuario(d.usuario)
+      if (!USUARIO_VALIDO.test(usuario)) throw new Error('El usuario debe tener de 3 a 30 letras o números (sin espacios)')
+      if (db.usuarios[usuario]) throw new Error('Ese usuario ya existe. Elige otro.')
+      const cedula = d.cedula.replace(/\D/g, '')
+      if (db.registros.some((x) => x.cedula === cedula && x.estado === 'pendiente')) throw new Error('Ya hay una solicitud en revisión con esa cédula.')
+      const uid = id()
+      db.usuarios[usuario] = uid
+      db.claves[uid] = d.clave
+      db.registros.push({ id: id(), user_id: uid, nombre: d.nombre.trim(), apellido: d.apellido.trim(), cedula, usuario, estado: 'pendiente', motivo: null, socio_id: null, created_at: new Date().toISOString() })
       guardar()
-      fijarSesion({ userId: s.user_id, email: s.email! })
+      fijarSesion({ userId: uid, email: usuario })
+    },
+    async miRegistro() {
+      return db.registros.find((x) => sesion && x.user_id === sesion.userId) ?? null
+    },
+    async reenviarRegistro(d) {
+      const r = db.registros.find((x) => sesion && x.user_id === sesion.userId)
+      if (!r) throw new Error('No encontrado')
+      Object.assign(r, { nombre: d.nombre.trim(), apellido: d.apellido.trim(), cedula: d.cedula.replace(/\D/g, ''), estado: 'pendiente', motivo: null })
+      guardar()
+      fijarSesion(sesion)
     },
     async cambiarClave(nueva) {
       if (!sesion) throw new Error('No autenticado')
@@ -257,6 +261,32 @@ export function crearDemoBackend(): Backend {
         db.entradas.push({ id: id(), evento_id: eventoId, socio_id: s.id, accion: s.accion!, nombre_asistente: n.trim(), codigo: id().replace(/-/g, '').slice(0, 24), estado: 'activa', created_at: ahora })
       if (ev.precio_usd > 0)
         db.cargos.push({ id: id(), accion: s.accion!, concepto: `${asistentes.length} entrada(s): ${ev.titulo}`, monto_usd: ev.precio_usd * asistentes.length, fecha: hoy(), vence: null, tipo: 'evento', estado: 'pendiente', created_at: ahora })
+      guardar()
+    },
+    async aprobarRegistro(registroId, accion, parentesco) {
+      await espera()
+      const r = db.registros.find((x) => x.id === registroId && x.estado === 'pendiente')
+      if (!r) throw new Error('La solicitud ya fue procesada')
+      let s = db.socios.find((x) => x.cedula === r.cedula)
+      if (s?.user_id) throw new Error('Esa cédula ya tiene un usuario activo')
+      if (!s) {
+        if (!accion.trim()) throw new Error('Indica el número de acción')
+        s = { id: id(), user_id: null, usuario: null, accion: accion.trim(), cedula: r.cedula, nombre: r.nombre, apellido: r.apellido, email: null, telefono: null, parentesco: (parentesco || 'titular') as any, fecha_nacimiento: null, foto_url: null, estado: 'activo', rol: 'socio', created_at: new Date().toISOString() }
+        db.socios.push(s)
+      }
+      s.user_id = r.user_id
+      s.usuario = r.usuario
+      r.estado = 'aprobado'
+      r.socio_id = s.id
+      db.notificaciones.unshift({ id: id(), titulo: '¡Bienvenido a Mi Hebraica!', cuerpo: 'Tu cuenta fue aprobada. Ya puedes usar tu carnet digital.', destino: 'socio', accion: null, socio_id: s.id, enlace: '/carnet', created_at: new Date().toISOString() })
+      guardar()
+    },
+    async rechazarRegistro(registroId, motivo) {
+      await espera()
+      const r = db.registros.find((x) => x.id === registroId && x.estado === 'pendiente')
+      if (!r) throw new Error('La solicitud ya fue procesada')
+      r.estado = 'rechazado'
+      r.motivo = motivo.trim() || null
       guardar()
     },
     async revisarPago(pagoId, aprobado, nota) {

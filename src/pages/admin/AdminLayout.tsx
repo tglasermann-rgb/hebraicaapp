@@ -1,5 +1,5 @@
 import clsx from 'clsx'
-import { ArrowLeft, BarChart3, LogOut, Smartphone, Bell, CalendarCheck, CalendarDays, Contact, DollarSign, Image, LayoutDashboard, ListChecks, MessageSquareText, Newspaper, QrCode, Receipt, Settings, ShieldCheck, Trophy, Users, UtensilsCrossed, Wallet } from 'lucide-react'
+import { ArrowLeft, BarChart3, LogOut, Smartphone, Bell, CalendarCheck, CalendarDays, Contact, DollarSign, Image, LayoutDashboard, ListChecks, MessageSquareText, Newspaper, QrCode, Receipt, Settings, ShieldCheck, Trophy, UserCheck, Users, UtensilsCrossed, Wallet } from 'lucide-react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '@/auth/AuthContext'
 import type { Rol } from '@/lib/types'
@@ -8,6 +8,7 @@ export const SECCIONES: { a: string; texto: string; icono: typeof Users; roles: 
   { a: '/admin', texto: 'Resumen', icono: LayoutDashboard, roles: ['administracion', 'deportes', 'eventos', 'seguridad'], grupo: '' },
   { a: '/admin/escaner', texto: 'Escáner de acceso', icono: QrCode, roles: ['seguridad', 'eventos'], grupo: 'Seguridad' },
   { a: '/admin/accesos', texto: 'Registro de accesos', icono: ShieldCheck, roles: ['seguridad'], grupo: 'Seguridad' },
+  { a: '/admin/accesos-nuevos', texto: 'Solicitudes de acceso', icono: UserCheck, roles: ['administracion'], grupo: 'Administración' },
   { a: '/admin/socios', texto: 'Socios', icono: Users, roles: ['administracion'], grupo: 'Administración' },
   { a: '/admin/pagos', texto: 'Pagos reportados', icono: Wallet, roles: ['administracion'], grupo: 'Administración' },
   { a: '/admin/cargos', texto: 'Cargos y cuotas', icono: Receipt, roles: ['administracion'], grupo: 'Administración' },
