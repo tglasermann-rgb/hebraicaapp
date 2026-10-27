@@ -6,7 +6,7 @@ import type { Tabla, Tablas } from './types'
 
 // Modo demo: replica las reglas de supabase/migrations en el navegador para poder probar el app sin servidor.
 
-const CLAVE_DB = 'mi-hebraica-demo-v5'
+const CLAVE_DB = 'mi-hebraica-demo-v6'
 const CLAVE_SESION = 'mi-hebraica-demo-sesion'
 
 function cargar(): DB {
@@ -273,8 +273,10 @@ export function crearDemoBackend(): Backend {
         if (i.estado !== 'activo') [ok, msg] = [false, `Pase ${i.estado}`]
         else if (i.fecha !== hoy()) [ok, msg] = [false, `El pase es para el ${i.fecha.split('-').reverse().join('/')}`]
         if (ok) i.estado = 'usado'
-        log('invitado', i.nombre, ok, msg)
-        return { valido: ok, tipo: 'invitado', nombre: i.nombre, detalle: `C.I. ${i.cedula} · Invitado de la acción ${i.accion}`, mensaje: msg }
+        const nombre = [i.nombre, i.apellido].filter(Boolean).join(' ')
+        const vehiculo = [i.marca_vehiculo, i.placa].filter(Boolean).join(' ')
+        log('invitado', nombre, ok, msg)
+        return { valido: ok, tipo: 'invitado', nombre, detalle: `${i.tipo_documento ?? 'V'}-${i.cedula} · Invitado de la acción ${i.accion}${i.tipo_invitado ? ` · ${i.tipo_invitado}` : ''}${vehiculo ? ` · Vehículo ${vehiculo}` : ''}`, mensaje: msg }
       }
       if (tipo === 'E') {
         const e = db.entradas.find((x) => x.codigo === val)
@@ -543,7 +545,7 @@ export function crearDemoBackend(): Backend {
       const i = db.invitados.find((x) => x.codigo === codigo)
       if (!i) return null
       const s = db.socios.find((x) => x.id === i.socio_id)
-      return { nombre: i.nombre, fecha: i.fecha, estado: i.estado, anfitrion: s ? `${s.nombre} ${s.apellido}` : '' }
+      return { nombre: [i.nombre, i.apellido].filter(Boolean).join(' '), fecha: i.fecha, estado: i.estado, anfitrion: s ? `${s.nombre} ${s.apellido}` : '' }
     },
     async subirArchivo(_bucket, archivo) {
       return await reducirImagen(archivo)

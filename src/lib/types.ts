@@ -277,7 +277,16 @@ export interface Invitado {
   socio_id: string
   accion: string
   nombre: string
+  apellido: string | null
+  /** V: cédula venezolana · E: cédula de extranjero · P: pasaporte */
+  tipo_documento: 'V' | 'E' | 'P'
   cedula: string
+  email: string | null
+  tipo_invitado: string | null
+  placa: string | null
+  marca_vehiculo: string | null
+  motivo: string | null
+  acepto_terminos: boolean
   fecha: string
   codigo: string
   estado: 'activo' | 'usado' | 'anulado'

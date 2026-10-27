@@ -370,3 +370,24 @@ export const REGLAS_PADEL: Partial<Instalacion> = {
   sancion_horas: 72,
   descripcion: 'Bloques de 1 hora y media con mínimo 4 jugadores. Una reserva activa a la vez. Puedes cancelar hasta 2 horas antes. Si no asistes sin cancelar no podrás reservar por 72 horas.',
 }
+
+// ---------------------------------------------------------------------------
+// NOTICIAS DE EJEMPLO (las mismas que carga la migración 0011)
+// ---------------------------------------------------------------------------
+export const NOTICIAS_EJEMPLO = [
+  { titulo: 'Hebraica volvió a decir presente en un escenario internacional', resumen: 'Tres jóvenes nadadoras representaron a Hebraica y a la Kehilá en una competencia internacional.', contenido: 'Tres jóvenes nadadoras representaron a Hebraica y a la Kehilá en una competencia internacional. ¡Felicitaciones a nuestras atletas, a sus entrenadores y a sus familias por su esfuerzo y dedicación!', departamento: 'club', destacado: true, hace: 1 },
+  { titulo: 'Hebraica ofreció tres semanas de Actividades Recreativas para acompañar a las familias', resumen: 'Un espacio de encuentro y contención para las familias en un momento de especial sensibilidad.', contenido: 'Durante tres semanas Hebraica ofreció actividades recreativas para acompañar a las familias en un momento de especial sensibilidad. Gracias a todo el equipo y a los voluntarios que lo hicieron posible.', departamento: 'club', destacado: false, hace: 4 },
+  { titulo: 'Con gratitud y emoción, Hebraica despidió a la delegación israelí', resumen: 'La delegación acompañó a Venezuela en uno de los momentos más difíciles.', contenido: 'Con gratitud y emoción, Hebraica despidió a la delegación israelí que acompañó a Venezuela en uno de los momentos más difíciles. Gracias por su compromiso y solidaridad.', departamento: 'club', destacado: false, hace: 8 },
+  { titulo: 'Unidos en Comunidad celebramos la Gran Fiesta de Purim', resumen: 'Disfraces, música y alegría para toda la familia.', contenido: 'Unidos en comunidad celebramos la Gran Fiesta de Purim con disfraces, música, juegos y mucha alegría para toda la familia. ¡Gracias a todos por acompañarnos!', departamento: 'club', destacado: false, hace: 12 },
+  { titulo: 'XXXII Torneo de Escuelas Deportivas Hebraica 2026 – Copa BNC', resumen: 'Nuestras escuelas deportivas compitieron en una nueva edición del torneo.', contenido: 'Se celebró el XXXII Torneo de Escuelas Deportivas Hebraica 2026 – Copa BNC, con la participación de nuestros atletas de todas las categorías. ¡Felicitaciones a todos los participantes!', departamento: 'deportes', destacado: false, hace: 15 },
+]
+
+/** Términos que el socio acepta al registrar un invitado. */
+export const TERMINOS_INVITADOS = [
+  'El socio que invita es responsable de la conducta de su invitado y de cualquier daño que ocasione dentro de la institución.',
+  'El invitado debe presentar en portería el código QR del pase y el documento de identidad indicado.',
+  'El pase es personal, válido solo para la fecha indicada y para un único ingreso.',
+  'Los invitados no pueden participar en actividades, academias ni competencias, salvo autorización de la Junta Directiva.',
+  'El invitado debe cumplir las normas del club. Seguridad puede negar el ingreso o retirar a quien no las cumpla.',
+  'Los datos del invitado se usan solo para el control de acceso.',
+]

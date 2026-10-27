@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom'
 import clsx from 'clsx'
 import { ChevronLeft, ChevronRight, Loader2, X } from 'lucide-react'
 import QRCode from 'qrcode'
@@ -252,7 +253,8 @@ export function Hoja({ abierta, onCerrar, titulo, children }: { abierta: boolean
     return () => window.removeEventListener('keydown', esc)
   }, [abierta, onCerrar])
   if (!abierta) return null
-  return (
+  // Portal al body: si se dibuja dentro de la página animada, "fixed" queda relativo a ella y la hoja se corta
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center" role="dialog" aria-modal>
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onCerrar} />
       <div className="animar-entrada relative max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-[32px] bg-superficie pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:rounded-[32px]">
@@ -267,7 +269,8 @@ export function Hoja({ abierta, onCerrar, titulo, children }: { abierta: boolean
         </div>
         <div className="px-5 pt-4">{children}</div>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }
 

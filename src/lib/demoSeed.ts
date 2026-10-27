@@ -1,5 +1,5 @@
 import { addDays, format, subDays } from 'date-fns'
-import { ACTIVIDADES, DATOS_BANCARIOS, DIRECTORIO, EVENTOS, NORMAS, REGLAS_PADEL } from './datosHebraica'
+import { ACTIVIDADES, DATOS_BANCARIOS, DIRECTORIO, EVENTOS, NORMAS, NOTICIAS_EJEMPLO, REGLAS_PADEL } from './datosHebraica'
 import type { Tablas } from './types'
 
 /** Datos de ejemplo para el modo demo. Todos los nombres y montos son ficticios. */
@@ -54,13 +54,11 @@ export function semilla(): DB {
   const tasas: Tablas['tasas'][] = [{ ...base, id: 't1', fecha: d(0), bs_por_usd: 36.62 }]
 
   const sinReglas = { max_reservas_activas: null, cancelar_hasta_horas: null, jugadores_min: null, sancion_horas: null }
+  // Lo que se reserva en el club: Pádel, Pilates y Bowling
   const instalaciones: Tablas['instalaciones'][] = [
-    { ...base, ...sinReglas, id: 'i1', nombre: 'Cancha de Tenis 1', tipo: 'Tenis', descripcion: 'Arcilla. Traer raqueta y pelotas.', imagen_url: null, hora_apertura: '06:00', hora_cierre: '21:00', duracion_min: 60, max_reservas_dia: 1, activo: true },
-    { ...base, ...sinReglas, id: 'i2', nombre: 'Cancha de Tenis 2', tipo: 'Tenis', descripcion: 'Arcilla. Iluminación nocturna.', imagen_url: null, hora_apertura: '06:00', hora_cierre: '21:00', duracion_min: 60, max_reservas_dia: 1, activo: true },
+    { ...base, ...sinReglas, id: 'i1', nombre: 'Pilates', tipo: 'Pilates', descripcion: 'Reserva tu clase de Pilates. Bloques de 1 hora. Llega 5 minutos antes.', imagen_url: null, hora_apertura: '07:00', hora_cierre: '19:00', duracion_min: 60, max_reservas_dia: 1, activo: true },
+    { ...base, ...sinReglas, id: 'i2', nombre: 'Bowling Hebraica', tipo: 'Bowling', descripcion: 'Reserva una pista de bowling. Bloques de 1 hora.', imagen_url: null, hora_apertura: '10:00', hora_cierre: '21:00', duracion_min: 60, max_reservas_dia: 1, activo: true },
     { ...base, ...sinReglas, id: 'i3', nombre: 'Cancha de Pádel', tipo: 'Pádel', descripcion: null, imagen_url: null, hora_apertura: '07:00', hora_cierre: '22:00', duracion_min: 90, max_reservas_dia: 1, activo: true, ...REGLAS_PADEL },
-    { ...base, ...sinReglas, id: 'i4', nombre: 'Cancha de Fútbol', tipo: 'Fútbol', descripcion: 'Grama artificial, fútbol 7.', imagen_url: null, hora_apertura: '08:00', hora_cierre: '20:00', duracion_min: 60, max_reservas_dia: 1, activo: true },
-    { ...base, ...sinReglas, id: 'i5', nombre: 'Parrillera A', tipo: 'Parrillera', descripcion: 'Capacidad 25 personas. Reserva por bloque.', imagen_url: null, hora_apertura: '11:00', hora_cierre: '19:00', duracion_min: 240, max_reservas_dia: 1, activo: true },
-    { ...base, ...sinReglas, id: 'i6', nombre: 'Salón de Fiestas', tipo: 'Salón', descripcion: 'Capacidad 80 personas.', imagen_url: null, hora_apertura: '10:00', hora_cierre: '22:00', duracion_min: 240, max_reservas_dia: 1, activo: true },
   ]
 
   // Actividades reales de la Guía de Inscripciones 2026-2027
@@ -84,11 +82,9 @@ export function semilla(): DB {
   Object.assign(kineret, { destacado: true, venta_entradas: true, precio_usd: 15, aforo: 400, max_por_accion: 8, todo_el_dia: false, fecha_inicio: '2027-06-27T18:00:00-04:00', lugar: 'Anfiteatro' })
   const idEv = (titulo: string) => eventos.find((e) => e.titulo === titulo)!.id
 
-  const noticias: Tablas['noticias'][] = [
-    { ...base, id: 'n1', titulo: '¡Bienvenidos a Mi Hebraica!', resumen: 'Ya puedes llevar tu carnet en el teléfono, pagar tus cuotas y reservar canchas desde el app.', contenido: 'A partir de hoy todos los socios pueden usar Mi Hebraica para:\n\n• Entrar al club con el carnet digital\n• Consultar el estado de cuenta y reportar pagos\n• Reservar canchas, parrilleras y salones\n• Inscribirse en actividades y comprar entradas\n\nSi tienes dudas, escríbenos a info@hebraica.org.', imagen_url: null, departamento: 'comunicaciones', destacado: true, publicado_en: ahora },
-    { ...base, id: 'n2', titulo: 'Abiertas las inscripciones de Macabilandia', resumen: 'Inscribe a tus hijos en el plan vacacional directamente desde el app.', contenido: 'Las inscripciones para Macabilandia ya están abiertas. Cupos limitados por semana.', imagen_url: null, departamento: 'macabilandia', destacado: false, publicado_en: subDays(new Date(), 2).toISOString() },
-    { ...base, id: 'n3', titulo: 'Mantenimiento de la piscina', resumen: 'La piscina olímpica estará cerrada el próximo lunes por mantenimiento.', contenido: 'La piscina olímpica permanecerá cerrada el lunes por labores de mantenimiento preventivo. La piscina de niños funcionará en horario normal.', imagen_url: null, departamento: 'deportes', destacado: false, publicado_en: subDays(new Date(), 5).toISOString() },
-  ]
+  const noticias: Tablas['noticias'][] = NOTICIAS_EJEMPLO.map(({ hace, ...n }, i) => ({
+    ...base, ...n, id: `n${i + 1}`, imagen_url: null, publicado_en: subDays(new Date(), hace).toISOString(),
+  }))
 
   const albumes: Tablas['albumes'][] = [
     { ...base, id: 'al1', titulo: 'Jánuca en Hebraica', fecha: d(-40), portada_url: null },
